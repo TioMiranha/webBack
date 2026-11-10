@@ -12,6 +12,15 @@ class PerfisControllerTest extends TestCase
 
     protected array $fixtures = ['app.Tipos'];
 
+    public function testSingularRouteAlias(): void
+    {
+        $this->get('/api/perfil/listar.json');
+        $this->assertResponseOk();
+        $this->get('/api/perfil/buscar/1.json');
+        $this->assertResponseOk();
+        $this->assertSame(1, json_decode((string)$this->_response->getBody(), true)['data']['id']);
+    }
+
     public function testCrudUsesTiposAndRouteId(): void
     {
         $this->post('/api/perfis/adicionar.json', ['nome' => 'Responsável']);

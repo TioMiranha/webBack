@@ -38,7 +38,7 @@ class AlunosImportService
     }
 
     /**
-     * Importa a primeira aba. saveMany mantém a gravação de todas as linhas atômica.
+     * Importa a primeira aba, criando ou atualizando pela matrícula em uma transação.
      *
      * @param \Psr\Http\Message\UploadedFileInterface|null $file Upload recebido no formulário.
      * @return array<string, mixed> Quantidade importada, mensagem e erros por linha da planilha.
@@ -102,6 +102,9 @@ class AlunosImportService
                     }
                     $data[$field] = trim((string)$value);
                 }
+                if (ctype_digit($data['matricula'])) {
+                    $data['matricula'] = ltrim($data['matricula'], '0') ?: '0';
+                }
                 if (!array_filter($data, static fn($value) => $value !== '')) {
                     continue;
                 }
@@ -117,6 +120,52 @@ class AlunosImportService
             if (!$records) {
                 return $this->failure('A planilha não contém alunos para importar.');
             }
+
+            // A matrícula é numérica no banco: 001 e 1 identificam o mesmo aluno.
+            $linesByMatricula = [];
+            foreach ($records as $line => $record) {
+                $matricula = (string)$record->matricula;
+                if (isset($linesByMatricula[$matricula])) {
+                    $errors[$line]['matricula'] = ['duplicada' => 'Matrícula repetida na planilha.'];
+                } else {
+                    $linesByMatricula[$matricula] = $line;
+                }
+            }
+            if ($errors) {
+                return $this->failure('Nenhum aluno foi importado. Corrija as matrículas repetidas.', $errors);
+            }
+
+            // Consulta em lotes para não exceder o limite de parâmetros do banco.
+            $existing = [];
+            foreach (array_chunk(array_keys($linesByMatricula), 500) as $matriculas) {
+                foreach ($this->alunos->find()->where(['matricula IN' => $matriculas])->all() as $record) {
+                    $matricula = (string)$record->matricula;
+                    if (isset($existing[$matricula])) {
+                        $line = $linesByMatricula[$matricula];
+                        $errors[$line]['matricula'] = [
+                            'ambigua' => 'Há mais de um aluno com esta matrícula no banco. Corrija o cadastro.',
+                        ];
+                    }
+                    $existing[$matricula] = $record;
+                }
+            }
+            if ($errors) {
+                return $this->failure('Nenhum aluno foi importado. Há matrículas ambíguas no cadastro.', $errors);
+            }
+
+            $updated = 0;
+            foreach ($records as $line => $record) {
+                $current = $existing[(string)$record->matricula] ?? null;
+                if ($current !== null) {
+                    // Preserva ID, vínculos e estado de ativação; não corta campos da planilha.
+                    $records[$line] = $this->alunos->patchEntity(
+                        $current,
+                        $record->extract(array_values(array_unique(self::CAMPOS))),
+                        ['validate' => 'import'],
+                    );
+                    $updated++;
+                }
+            }
             if (!$this->alunos->saveMany($records)) {
                 foreach ($records as $line => $record) {
                     if ($record->hasErrors()) {
@@ -127,7 +176,12 @@ class AlunosImportService
                 return $this->failure('Nenhum aluno foi importado. Verifique os dados.', $errors);
             }
 
-            return ['message' => 'Alunos importados com sucesso.', 'imported' => count($records)];
+            return [
+                'message' => 'Alunos importados com sucesso.',
+                'imported' => count($records),
+                'inseridos' => count($records) - $updated,
+                'atualizados' => $updated,
+            ];
         } catch (ReaderException $exception) {
             return $this->failure('Não foi possível ler a planilha. Envie um arquivo XLS ou XLSX válido.');
         } finally {

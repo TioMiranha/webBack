@@ -45,8 +45,8 @@ As migrations novas permitem `deleted = NULL` nos cadastros existentes e criam `
 Para executar localmente com SQLite, depois de instalar as dependências:
 
 ```bash
-DATABASE_URL="sqlite://127.0.0.1${PWD}/tmp/development.sqlite" ./bin/cake migrations migrate
-DATABASE_URL="sqlite://127.0.0.1${PWD}/tmp/development.sqlite" ./bin/cake server -p 8765
+DATABASE_URL="sqlite://127.0.0.1/${PWD}/tmp/development.sqlite" ./bin/cake migrations migrate
+DATABASE_URL="sqlite://127.0.0.1/${PWD}/tmp/development.sqlite" ./bin/cake server -p 8765
 ```
 
 ## Uso pelas telas
@@ -84,13 +84,17 @@ curl -X POST http://localhost:8765/api/responsaveis/adicionar.json \
 
 As consultas aceitam filtros por `users_id` e `alunos_id`, por exemplo `/api/responsaveis/listar.json?alunos_id=1`. `/api/alunos/buscar/1.json` retorna os responsáveis com os dados dos usuários. As senhas são armazenadas como hash e omitidas das respostas JSON.
 
+`GET /api/alunos/findmat/1234.json` busca parte da matrícula (até 19 dígitos) e `GET /api/alunos/findname/Ana.json` busca parte do nome. As duas buscas retornam uma lista de alunos ativos com todos os responsáveis, incluindo alunos sem vínculos. Nomes aceitam acentos, espaços, apóstrofos e hífens; caracteres de busca inválidos retornam HTTP 422. O alias `/api/perfil` também atende às rotas de `/api/perfis`.
+
 As respostas de sucesso usam a chave `data`; cadastros retornam HTTP 201, edições e consultas HTTP 200. Erros de validação retornam HTTP 422 com `message` e `errors`, IDs inexistentes retornam 404 e métodos não permitidos retornam 405.
 
 O login existente é atendido por `POST /api/usuarios/entrar.json` (ou `/login/entrar`) com `email` e `password`. Ele verifica as credenciais e registra o usuário na sessão. O projeto acadêmico mantém as rotas de cadastro abertas; o login não implementa controle de permissões sobre elas.
 
+As sessões usam `tmp/sessions`, criada pelo instalador do projeto. Essa pasta deve ter permissão de escrita para o processo PHP, assim como as demais pastas de `tmp`.
+
 ### Importação de alunos
 
-Acesse **Alunos → Importar planilha** (`/alunos/importar`) ou envie um arquivo XLS ou XLSX para `POST /api/alunos/importar.json`, no campo de upload `excel_file`. A leitura usa `phpoffice/phpspreadsheet`, já instalado no projeto, e a gravação usa o ORM do CakePHP.
+Acesse **Alunos → Importar planilha** (`/alunos/importar`) ou envie um arquivo XLS ou XLSX para `POST /api/alunos/importar.json`, no campo de upload `excel_file` (a API também aceita `arquivo` e `file`). A leitura usa `phpoffice/phpspreadsheet`, já instalado no projeto, e a gravação usa o ORM do CakePHP.
 
 A primeira aba deve ter os cabeçalhos na primeira linha, em qualquer ordem:
 
@@ -106,7 +110,7 @@ A primeira aba deve ter os cabeçalhos na primeira linha, em qualquer ordem:
 
 Também são aceitos os títulos do `Relatorio.xlsx`: `Nome`, `Matrícula`, `Curso`, `Situação`, `E-mail Acadêmico`, `E-mail Pessoal` e `Ano/Periodo Letivo`. A comparação ignora maiúsculas, acentos, espaços e pontuação. Os nomes antigos `emaila`, `emailp` e `anop` continuam aceitos. Colunas extras, como `#`, `Campus` e `Polo`, são ignoradas; dois cabeçalhos para o mesmo campo são rejeitados.
 
-Os sete cabeçalhos são obrigatórios. Os e-mails podem ter células vazias na importação e são gravados como texto vazio; os outros campos devem ser preenchidos. A matrícula deve conter apenas dígitos e caber em um BIGINT assinado. Para preservar matrículas longas no próprio Excel, prefira células de texto. Linhas com os sete campos vazios são ignoradas. A importação **cria novos alunos**; reenviar o arquivo cria novos registros, sem atualizar ou eliminar matrículas repetidas.
+Os sete cabeçalhos são obrigatórios. Os e-mails podem ter células vazias na importação e são gravados como texto vazio; os outros campos devem ser preenchidos. A matrícula deve conter apenas dígitos e caber em um BIGINT assinado. Para preservar matrículas longas no próprio Excel, prefira células de texto. Linhas com os sete campos vazios são ignoradas. A importação **atualiza pela matrícula ou cria um aluno novo**, preservando ID, responsáveis e estado de ativação. Reenviar a planilha não duplica os cadastros. Zeros à esquerda não diferenciam matrículas, pois o campo é numérico no banco. Matrículas repetidas na planilha ou com múltiplos cadastros no banco são rejeitadas com erro por linha, sem escolher arbitrariamente um aluno. Campos longos são rejeitados em vez de cortados; o texto da situação não desativa nem reativa o aluno automaticamente.
 
 Antes de usar, aplique a migration que amplia `alunos.situacao` para 100 caracteres, pois o relatório tem situações maiores que o limite anterior de 25:
 
@@ -121,7 +125,7 @@ curl -X POST http://localhost:8765/api/alunos/importar.json \
   -F 'excel_file=@/home/eduardosilva/Documentos/Relatorio.xlsx'
 ```
 
-O sucesso retorna HTTP 201 com `{"message":"Alunos importados com sucesso.","imported":6189}` (quantidade do relatório de exemplo). Uma planilha inválida retorna HTTP 422 com `imported: 0` e `errors` indexados pelo número real da linha do Excel. A gravação é atômica: nenhuma linha é salva se houver erro de validação ou de regra de negócio. O arquivo temporário é removido ao terminar.
+O sucesso retorna HTTP 201 com `{"message":"Alunos importados com sucesso.","imported":6189,"inseridos":6189,"atualizados":0}` (exemplo de primeira importação). `imported` soma as linhas inseridas e atualizadas. Uma planilha inválida retorna HTTP 422 com `imported: 0` e `errors` indexados pelo número real da linha do Excel. A gravação é atômica: nenhuma linha é salva se houver erro de validação ou de regra de negócio. O arquivo temporário é removido ao terminar.
 
 ## Testes
 

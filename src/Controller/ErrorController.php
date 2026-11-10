@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Cake\Event\EventInterface;
+use Cake\View\JsonView;
 
 /**
  * Error Handling Controller
@@ -25,6 +26,16 @@ use Cake\Event\EventInterface;
  */
 class ErrorController extends AppController
 {
+    /**
+     * Permite respostas JSON para erros da API, incluindo 404 e 405.
+     *
+     * @return array<class-string<\Cake\View\View>>
+     */
+    public function viewClasses(): array
+    {
+        return [JsonView::class];
+    }
+
     /**
      * Initialization hook method.
      *

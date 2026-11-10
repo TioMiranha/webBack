@@ -112,7 +112,10 @@ class AlunosTable extends Table
     {
         $validator = $this->validationDefault($validator);
         $validator->allowEmptyString('emaila')->allowEmptyString('emailp');
-        $validator->nonNegativeInteger('matricula')->add('matricula', 'limiteBigint', [
+        $validator->nonNegativeInteger('matricula')->add('matricula', 'somenteDigitos', [
+            'rule' => static fn($value): bool => ctype_digit((string)$value),
+            'message' => 'A matrícula deve conter apenas dígitos.',
+        ])->add('matricula', 'limiteBigint', [
             'rule' => static function ($value): bool {
                 $digits = ltrim((string)$value, '0');
                 $max = '9223372036854775807';

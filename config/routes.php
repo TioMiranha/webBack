@@ -17,7 +17,8 @@ return function (RouteBuilder $routes): void {
     $routes->prefix('Api', function (RouteBuilder $builder): void {
         $builder->setExtensions(['json']);
         $controllers = [
-            'perfis' => 'Perfis', 'usuarios' => 'Users', 'alunos' => 'Alunos', 'responsaveis' => 'Responsaveis',
+            'perfis' => 'Perfis', 'perfil' => 'Perfis', 'usuarios' => 'Users',
+            'alunos' => 'Alunos', 'responsaveis' => 'Responsaveis',
         ];
         foreach ($controllers as $path => $controller) {
             $builder->connect("/{$path}/adicionar", ['controller' => $controller, 'action' => 'add']);
@@ -33,5 +34,9 @@ return function (RouteBuilder $routes): void {
         }
         $builder->connect('/usuarios/entrar', ['controller' => 'Users', 'action' => 'logar']);
         $builder->connect('/alunos/importar', ['controller' => 'Alunos', 'action' => 'import']);
+        $builder->connect('/alunos/findmat/{matricula}', ['controller' => 'Alunos', 'action' => 'findByMat'])
+            ->setPass(['matricula'])->setPatterns(['matricula' => '\d+']);
+        $builder->connect('/alunos/findname/{name}', ['controller' => 'Alunos', 'action' => 'findByName'])
+            ->setPass(['name'])->setPatterns(['name' => '[^/]+']);
     });
 };

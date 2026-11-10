@@ -9,6 +9,9 @@
     <p>Selecione um arquivo XLS ou XLSX com os cabeçalhos na primeira linha:</p>
     <p>Nome, Matrícula, Curso, Situação, E-mail Acadêmico, E-mail Pessoal e Ano/Periodo Letivo.</p>
     <p>Os e-mails podem ficar vazios. Se houver uma linha inválida, nenhum aluno será salvo.</p>
+    <p>Matrículas já cadastradas atualizam o aluno; matrículas novas criam um cadastro.
+        Os vínculos com os responsáveis e o estado de ativação são preservados.
+        Matrículas repetidas na planilha ou no cadastro devem ser corrigidas antes de importar.</p>
     <?= $this->Form->create(null, ['type' => 'file']) ?>
     <?= $this->Form->control('excel_file', [
         'type' => 'file',

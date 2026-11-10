@@ -85,8 +85,12 @@ class ResponsaveisControllerTest extends TestCase
         $this->assertSame([], json_decode((string)$this->_response->getBody(), true)['data']);
         $this->get('/api/responsaveis/buscar/999.json');
         $this->assertResponseCode(404);
+        $this->assertContentType('application/json');
+        $this->assertSame(404, json_decode((string)$this->_response->getBody(), true)['code']);
         $this->get('/api/responsaveis/deletar/1.json');
         $this->assertResponseCode(405);
+        $this->assertContentType('application/json');
+        $this->assertSame(405, json_decode((string)$this->_response->getBody(), true)['code']);
         $this->get('/api/responsaveis/adicionar.json');
         $this->assertResponseCode(405);
     }
