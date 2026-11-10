@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller\Api;
 
+use Cake\Event\EventInterface;
+use Cake\Event\EventManager;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -242,6 +244,78 @@ class AlunosControllerTest extends TestCase
     {
         $this->get('/api/alunos/importar.json');
         $this->assertResponseCode(405);
+    }
+
+    public function testInlineImportRejectsRepeatedMatriculasAndRollsBackBusinessRuleFailure(): void
+    {
+        $table = $this->getTableLocator()->get('Alunos');
+        $original = $table->get(1)->nome;
+        $this->uploadRows([
+            ['nome', 'matricula', 'curso', 'situacao', 'emaila', 'emailp', 'anop'],
+            ['Primeira linha', '0001', 'Computação', 'Ativo', '', '', '2026/2'],
+            ['Outra linha', '1', 'Computação', 'Ativo', '', '', '2026/2'],
+        ]);
+        $this->assertResponseCode(422);
+        $data = json_decode((string)$this->_response->getBody(), true);
+        $this->assertSame(0, $data['imported']);
+        $this->assertArrayHasKey('matricula', $data['errors'][3]);
+        $this->assertSame($original, $table->get(1)->nome);
+
+        $listener = static function (EventInterface $event): void {
+            if ($event->getSubject()->getAlias() === 'Alunos') {
+                $event->getData('rules')->add(
+                    static fn($entity) => (string)$entity->matricula !== '999',
+                    'bloqueada',
+                    ['errorField' => 'matricula', 'message' => 'Matrícula bloqueada.'],
+                );
+            }
+        };
+        EventManager::instance()->on('Model.buildRules', $listener);
+        try {
+            $this->uploadRows([
+                ['nome', 'matricula', 'curso', 'situacao', 'emaila', 'emailp', 'anop'],
+                ['Nome alterado', '1', 'Computação', 'Ativo', '', '', '2026/2'],
+                ['Aluno novo', '2', 'Computação', 'Ativo', '', '', '2026/2'],
+                ['Aluno bloqueado', '999', 'Computação', 'Ativo', '', '', '2026/2'],
+            ]);
+        } finally {
+            EventManager::instance()->off('Model.buildRules', $listener);
+        }
+        $this->assertResponseCode(422);
+        $data = json_decode((string)$this->_response->getBody(), true);
+        $this->assertSame(0, $data['imported']);
+        $this->assertArrayHasKey('matricula', $data['errors'][4]);
+        $this->assertSame($original, $table->get(1)->nome);
+        $this->assertSame(1, $table->find()->count());
+    }
+
+    public function testRegistrationQueryKeepsLongMatriculaAndUsesResponsibleAliases(): void
+    {
+        $table = $this->getTableLocator()->get('Alunos');
+        $aluno = $table->get(1);
+        $aluno->matricula = PHP_INT_MAX;
+        $table->saveOrFail($aluno);
+        $users = $this->getTableLocator()->get('Users');
+        $user = $users->get(1);
+        $user->cpf = 12345678901;
+        $users->saveOrFail($user);
+        $this->get('/api/alunos/find-by-reg/' . PHP_INT_MAX . '.json');
+        $this->assertResponseOk();
+        $data = json_decode((string)$this->_response->getBody(), true)['data'];
+        $this->assertSame($aluno->nome, $data['nome']);
+        $this->assertSame($user->nome, $data['responsavel'][0]['nome']);
+        $this->assertSame($user->email, $data['responsavel'][0]['email']);
+        $this->assertSame(PHP_INT_MAX, (int)$data['matricula']);
+
+        $this->get('/api/alunos/buscar/1.json');
+        $this->assertResponseOk();
+        $data = json_decode((string)$this->_response->getBody(), true)['data'];
+        $this->assertSame('123.***.***-01', $data['responsaveis'][0]['user']['cpf']);
+        $this->assertSame(12345678901, $users->get(1)->cpf);
+        $this->post('/api/responsaveis/desativar/1.json');
+        $this->get('/api/alunos/find-by-reg/' . PHP_INT_MAX . '.json');
+        $this->assertResponseOk();
+        $this->assertSame([], json_decode((string)$this->_response->getBody(), true)['data']['responsavel']);
     }
 
     public function testSearchByMatriculaIncludesAllResponsibleUsersAndStudentsWithoutLinks(): void

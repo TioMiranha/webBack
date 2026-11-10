@@ -12,6 +12,52 @@ class UsersControllerTest extends TestCase
 
     protected array $fixtures = ['app.Tipos', 'app.Users', 'app.Alunos', 'app.Responsaveis'];
 
+    public function testDirectActionsRejectGetMutationsAndReturnMissingRecords(): void
+    {
+        foreach (['usuarios', 'alunos', 'responsaveis'] as $resource) {
+            foreach (['adicionar', 'editar/1', 'desativar/1', 'reativar/1'] as $action) {
+                $this->get('/api/' . $resource . '/' . $action . '.json');
+                $this->assertResponseCode(405);
+            }
+            $this->get('/api/' . $resource . '/buscar/999.json');
+            $this->assertResponseCode(404);
+            $this->assertContentType('application/json');
+        }
+        foreach (['Users', 'Alunos', 'Responsaveis'] as $alias) {
+            $this->assertNull($this->getTableLocator()->get($alias)->get(1)->deleted);
+        }
+    }
+
+    public function testSqlFindIncludesAllStudentsAndHandlesUsersWithoutLinks(): void
+    {
+        $table = $this->getTableLocator()->get('Alunos');
+        $data = $table->get(1)->toArray();
+        unset($data['id']);
+        $data['matricula'] = 2;
+        $aluno = $table->saveOrFail($table->newEntity($data));
+        $links = $this->getTableLocator()->get('Responsaveis');
+        $links->saveOrFail($links->newEntity(['users_id' => 1, 'alunos_id' => $aluno->id]));
+        $this->get('/api/usuarios/buscar/1.json');
+        $this->assertResponseOk();
+        $data = json_decode((string)$this->_response->getBody(), true)['data'];
+        $this->assertCount(2, $data['aluno']);
+        $this->assertCount(2, $data['responsaveis']);
+        $this->assertSame($aluno->id, $data['responsaveis'][1]['aluno']['id']);
+        $this->assertResponseNotContains('password');
+
+        foreach ($links->find()->all() as $link) {
+            $links->deleteOrFail($link);
+        }
+        $this->get('/api/usuarios/buscar/1.json');
+        $this->assertResponseOk();
+        $data = json_decode((string)$this->_response->getBody(), true)['data'];
+        $this->assertSame([], $data['aluno']);
+        $this->assertSame([], $data['responsaveis']);
+        $this->get('/api/usuarios/listar.json?nome=' . rawurlencode("' OR 1=1 --"));
+        $this->assertResponseOk();
+        $this->assertSame([], json_decode((string)$this->_response->getBody(), true)['data']);
+    }
+
     public function testCreateHashesPasswordAndEditKeepsItWhenEmpty(): void
     {
         $this->post('/api/usuarios/adicionar.json', [
