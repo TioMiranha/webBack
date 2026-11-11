@@ -136,6 +136,16 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/responsaveis/desativar/{id}', ['controller' => 'Responsaveis', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
         $builder->connect('/responsaveis/reativar/{id}', ['controller' => 'Responsaveis', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
 
+        // Cursos
+        $builder->connect('/cursos/adicionar', ['controller' => 'Cursos', 'action' => 'add']);
+        $builder->connect('/cursos/listar', ['controller' => 'Cursos', 'action' => 'list']);
+        $builder->connect('/cursos/buscar/{id}', ['controller' => 'Cursos', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/cursos/listar/{id}', ['controller' => 'Cursos', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/cursos/editar/{id}', ['controller' => 'Cursos', 'action' => 'edit'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/cursos/deletar/{id}', ['controller' => 'Cursos', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/cursos/desativar/{id}', ['controller' => 'Cursos', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/cursos/reativar/{id}', ['controller' => 'Cursos', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+
         $builder->fallbacks();
     });
 
