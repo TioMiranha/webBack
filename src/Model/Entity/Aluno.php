@@ -35,6 +35,7 @@ class Aluno extends Entity
         'nome' => true,
         'matricula' => true,
         'curso' => true,
+        'curso_id' => true,
         'situacao' => true,
         'emaila' => true,
         'emailp' => true,

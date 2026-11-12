@@ -57,12 +57,12 @@ class CursosController extends AppController
         $statusCode = 200;
 
         try {
-            $sql = 'SELECT id 
+            $sql = 'SELECT id, nome
                     FROM cursos c
                     WHERE deleted IS NULL';
             $form = $this->request->getData() + $this->request->getQueryParams();
             $params = [];
-            foreach (['id'] as $field) {
+            foreach (['id', 'nome'] as $field) {
                 if (isset($form[$field]) && $form[$field] !== '') {
                     $sql .= ' AND c.' . $field . ' = :' . $field;
                     $params[$field] = $form[$field];

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -42,7 +43,10 @@ class AlunosTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
-
+        $this->belongsTo('Cursos', [
+            'foreignKey' => 'curso_id',
+            'propertyName' => 'curso_cadastrado',
+        ]);
         $this->hasMany('Responsaveis', ['foreignKey' => 'alunos_id']);
     }
 
@@ -69,6 +73,11 @@ class AlunosTable extends Table
             ->maxLength('curso', 255)
             ->requirePresence('curso', 'create')
             ->notEmptyString('curso');
+
+        $validator
+            ->integer('curso_id')
+            ->greaterThan('curso_id', 0)
+            ->allowEmptyString('curso_id');
 
         $validator
             ->scalar('situacao')
@@ -134,6 +143,10 @@ class AlunosTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
+        $rules->add(
+            $rules->existsIn(['curso_id'], 'Cursos', ['allowNullableNulls' => true]),
+            ['errorField' => 'curso_id'],
+        );
         $rules->addDelete($rules->isNotLinkedTo('Responsaveis'), ['errorField' => 'id']);
 
         return $rules;

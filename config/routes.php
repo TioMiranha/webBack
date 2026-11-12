@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Routes configuration.
  *
@@ -29,6 +30,7 @@ use Cake\Routing\RouteBuilder;
  * So you can use `$this` to reference the application class instance
  * if required.
  */
+
 return function (RouteBuilder $routes): void {
     /*
      * The default class to use for all routes
@@ -145,6 +147,15 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/cursos/deletar/{id}', ['controller' => 'Cursos', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
         $builder->connect('/cursos/desativar/{id}', ['controller' => 'Cursos', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
         $builder->connect('/cursos/reativar/{id}', ['controller' => 'Cursos', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+
+        $builder->connect('/coordenadores/adicionar', ['controller' => 'Coordenadores', 'action' => 'add']);
+        $builder->connect('/coordenadores/listar', ['controller' => 'Coordenadores', 'action' => 'list']);
+        $builder->connect('/coordenadores/buscar/{id}', ['controller' => 'Coordenadores', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/coordenadores/listar/{id}', ['controller' => 'Coordenadores', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/coordenadores/editar/{id}', ['controller' => 'Coordenadores', 'action' => 'edit'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/coordenadores/deletar/{id}', ['controller' => 'Coordenadores', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/coordenadores/desativar/{id}', ['controller' => 'Coordenadores', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/coordenadores/reativar/{id}', ['controller' => 'Coordenadores', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
 
         $builder->fallbacks();
     });

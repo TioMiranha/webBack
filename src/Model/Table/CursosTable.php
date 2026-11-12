@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -42,7 +43,9 @@ class CursosTable extends Table
         $this->setTable('cursos');
         $this->setDisplayField('nome');
         $this->setPrimaryKey('id');
-
+        $this->hasMany('Alunos', [
+            'foreignKey' => 'curso_id',
+        ]);
         $this->addBehavior('Timestamp');
     }
 

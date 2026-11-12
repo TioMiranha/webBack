@@ -198,7 +198,7 @@ class AlunosController extends AppController
         }
         try {
             $alunoTable = $this->fetchTable('Alunos');
-            $result = $alunoTable->find()->contain(['Responsaveis.Users'])
+            $result = $alunoTable->find()->contain(['Cursos', 'Responsaveis.Users'])
                 ->where(['Alunos.deleted IS' => null])
                 ->where(static function ($exp) use ($matricula) {
                     return $exp->like('CAST(Alunos.matricula AS CHAR)', '%' . $matricula . '%');
@@ -349,7 +349,7 @@ class AlunosController extends AppController
         try {
             // Aceita somente os campos deste cadastro.
             $form = array_intersect_key($this->request->getData(), array_flip([
-                'nome', 'matricula', 'curso', 'situacao', 'emaila', 'emailp', 'anop',
+                'nome', 'matricula', 'curso', 'curso_id','situacao', 'emaila', 'emailp', 'anop',
             ]));
             $novoRegistro = $tabela->newEmptyEntity();
             $novoRegistro = $tabela->patchEntity($novoRegistro, $form);
@@ -384,7 +384,7 @@ class AlunosController extends AppController
         try {
             $registro = $tabela->get((int)$id);
             $form = array_intersect_key($this->request->getData(), array_flip([
-                'nome', 'matricula', 'curso', 'situacao', 'emaila', 'emailp', 'anop',
+                'nome', 'matricula', 'curso', 'curso_id','situacao', 'emaila', 'emailp', 'anop',
             ]));
 
             $registro = $tabela->patchEntity($registro, $form);
