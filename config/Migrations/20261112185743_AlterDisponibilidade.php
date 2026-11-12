@@ -1,0 +1,25 @@
+<?php
+declare(strict_types=1);
+
+use Migrations\BaseMigration;
+
+class AlterDisponibilidade extends BaseMigration
+{
+    /**
+     * Change Method.
+     *
+     * More information on this method is available here:
+     * https://book.cakephp.org/migrations/5/guides/writing-migrations/migration-methods.html#the-change-method
+     *
+     * @return void
+     */
+    public function change(): void
+    {
+        $this->table('disponibilidades')
+        ->changeColumn('deleted', 'datetime', [
+            'null' => true,
+            'default' => null,
+        ])
+        ->update();
+    }
+}

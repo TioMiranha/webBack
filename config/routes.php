@@ -157,6 +157,15 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/coordenadores/desativar/{id}', ['controller' => 'Coordenadores', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
         $builder->connect('/coordenadores/reativar/{id}', ['controller' => 'Coordenadores', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
 
+        $builder->connect('/disponibilidades/adicionar', ['controller' => 'Disponibilidades', 'action' => 'add']);
+        $builder->connect('/disponibilidades/listar', ['controller' => 'Disponibilidades', 'action' => 'list']);
+        $builder->connect('/disponibilidades/buscar/{id}', ['controller' => 'Disponibilidades', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/disponibilidades/listar/{id}', ['controller' => 'Disponibilidades', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/disponibilidades/editar/{id}', ['controller' => 'Disponibilidades', 'action' => 'edit'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/disponibilidades/deletar/{id}', ['controller' => 'Disponibilidades', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/disponibilidades/desativar/{id}', ['controller' => 'Disponibilidades', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/disponibilidades/reativar/{id}', ['controller' => 'Disponibilidades', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+
         $builder->fallbacks();
     });
 
