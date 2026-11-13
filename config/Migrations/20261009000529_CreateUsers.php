@@ -41,10 +41,19 @@ class CreateUsers extends BaseMigration
             'limit' => 20,
             'null' => false,
         ]);
+         $table->addColumn('agendar', 'boolean', [
+            'default' => 0,
+            'null' => false,
+        ]);
         $table->addColumn('tipo_id', 'integer', [
             'default' => null,
             'limit' => 11,
             'null' => false,
+        ]);
+        $table->addColumn('setor_id', 'integer', [
+            'default' => null,
+            'limit' => 11,
+            'null' => true,
         ]);
         $table->addColumn('created', 'datetime', [
             'default' => null,

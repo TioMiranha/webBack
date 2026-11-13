@@ -12,7 +12,7 @@ use Cake\ORM\Entity;
  * @property string $nome
  * @property \Cake\I18n\DateTime $created
  * @property \Cake\I18n\DateTime $modified
- * @property string $deleted
+ * @property string|null $deleted
  *
  * @property \App\Model\Entity\User[] $users
  */

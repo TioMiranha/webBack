@@ -136,3 +136,11 @@ composer test
 A configuração de exemplo usa SQLite no banco de testes. Para testar no MySQL, configure um banco separado em `Datasources.test` ou informe `DATABASE_TEST_URL`. Use exclusivamente um banco de testes: a suíte recria o schema e limpa os dados.
 
 Os testes cobrem as migrations pelas fixtures, o cadastro completo pelas telas, relações em ambas as direções, chaves estrangeiras, duplicidade, edição, desativação, reativação, senha, login e importação XLS/XLSX pela API e pela tela. A importação é verificada com cabeçalhos do relatório, nomes alternativos, e-mails vazios, matrículas longas, erros por linha, atomicidade e arquivos inválidos. Scaffolds vazios de controllers inexistentes (`Categoria` e `Marca`) foram removidos da suíte.
+
+A inicialização dos testes recusa uma conexão que aponte para o mesmo banco da aplicação. Configure `DATABASE_TEST_URL` ou `Datasources.test` antes de executar a suíte.
+
+### Agendamentos e disponibilidades
+
+Aplique as migrations antes de usar o cadastro de agendamentos. Ele recebe `responsavel_id` (ID do vínculo em `responsaveis`), `coordenador_id` (ID do vínculo em `coordenadores`), `data` (`AAAA-MM-DD`), `hora`, `assunto` e `status`. As rotas de listar, buscar, editar, desativar e reativar seguem o mesmo formato dos demais cadastros. Os campos legados são preservados; registros antigos podem ter os campos novos vazios.
+
+Disponibilidades são consultadas pelo próprio ID, e o fim deve ser posterior ao início. Cadastro, edição, desativação e reativação exigem login; as alterações são restritas ao dono do vínculo de coordenador.

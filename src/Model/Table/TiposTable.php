@@ -72,7 +72,7 @@ class TiposTable extends Table
     }
 
     /**
-     * @inheritDoc
+     * Impede a exclusão física de perfis usados por usuários.
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {

@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Controller\Api;
@@ -7,18 +6,15 @@ namespace App\Controller\Api;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Http\Response;
 use Exception;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
-use Psr\Http\Message\UploadedFileInterface;
-use RuntimeException;
-use Throwable;
 
 /**
  * Cursos Controller
- *
  */
 class CursosController extends AppController
 {
+    /**
+     * Cadastra o registro com os campos permitidos.
+     */
     public function add(): Response
     {
         $this->request->allowMethod(['post']);
@@ -51,6 +47,9 @@ class CursosController extends AppController
         return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
     }
 
+    /**
+     * Lista os registros ativos e aplica os filtros.
+     */
     public function list(): Response
     {
         $this->request->allowMethod(['get', 'post']);
@@ -64,6 +63,9 @@ class CursosController extends AppController
             $params = [];
             foreach (['id', 'nome'] as $field) {
                 if (isset($form[$field]) && $form[$field] !== '') {
+                    if (!is_scalar($form[$field])) {
+                        return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
+                    }
                     $sql .= ' AND c.' . $field . ' = :' . $field;
                     $params[$field] = $form[$field];
                 }
@@ -78,6 +80,9 @@ class CursosController extends AppController
         return $this->json(['data' => $result], $statusCode);
     }
 
+    /**
+     * Consulta o registro pelo ID da rota.
+     */
     public function find(?string $id = null): Response
     {
         $this->request->allowMethod(['get']);
@@ -93,9 +98,6 @@ class CursosController extends AppController
             if (!empty($results)) {
                 $result['id'] = (int)$results[0]['id'];
                 $result['nome'] = $results[0]['nome'];
-
-               // $curso = ['id' => (int)$result['id'], 'nome' => $result['nome']];
-                
             } else {
                 return $this->json(['message' => 'Registro não encontrado!', 'code' => 404], 404);
             }
@@ -123,7 +125,6 @@ class CursosController extends AppController
             $form = array_intersect_key($this->request->getData(), array_flip([
                 'nome',
             ]));
-            // Uma senha vazia na edição mantém o hash atual.
 
             $registro = $tabela->patchEntity($registro, $form);
 
@@ -145,6 +146,9 @@ class CursosController extends AppController
         return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
     }
 
+    /**
+     * Desativa o registro preservando seu histórico.
+     */
     public function delete(?string $id = null): Response
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -176,6 +180,9 @@ class CursosController extends AppController
         return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
     }
 
+    /**
+     * Reativa o registro existente.
+     */
     public function active(?string $id = null): Response
     {
         $this->request->allowMethod(['post', 'put', 'patch']);

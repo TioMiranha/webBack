@@ -9,13 +9,17 @@ use Cake\ORM\Entity;
  * Agendamento Entity
  *
  * @property int $id
- * @property int $disponibilidade_id
- * @property int $users_id
+ * @property int|null $disponibilidade_id
+ * @property int|null $users_id
+ * @property int|null $responsavel_id
+ * @property int|null $coordenador_id
+ * @property \Cake\I18n\Date|null $data
+ * @property \Cake\I18n\Time|null $hora
  * @property string $assunto
  * @property int $status
  * @property \Cake\I18n\DateTime $created
  * @property \Cake\I18n\DateTime $modified
- * @property \Cake\I18n\DateTime $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  *
  * @property \App\Model\Entity\Disponibilidade $disponibilidade
  * @property \App\Model\Entity\User $user
@@ -32,6 +36,10 @@ class Agendamento extends Entity
      * @var array<string, bool>
      */
     protected array $_accessible = [
+        'responsavel_id' => true,
+        'coordenador_id' => true,
+        'data' => true,
+        'hora' => true,
         'disponibilidade_id' => true,
         'users_id' => true,
         'assunto' => true,

@@ -134,6 +134,87 @@ class DisponibilidadesControllerTest extends TestCase
         $this->assertResponseCode(405);
     }
 
+    public function testListsAndFindsByAvailabilityIdInsteadOfCoordinatorId(): void
+    {
+        $table = $this->getTableLocator()->get('Disponibilidades');
+        $record = $table->saveOrFail($table->newEntity($this->dates() + ['coordenador_id' => 1]));
+        $this->get('/api/disponibilidades/listar.json?id=' . $record->id);
+        $this->assertResponseOk();
+        $data = json_decode((string)$this->_response->getBody(), true)['data'];
+        $this->assertCount(1, $data);
+        $this->assertSame($record->id, $data[0]['id']);
+        $this->assertSame(1, $data[0]['coordenador_id']);
+        $this->assertSame('2026-11-13 14:30:00', $data[0]['dataFim']);
+        $this->get('/api/disponibilidades/buscar/' . $record->id . '.json');
+        $this->assertResponseOk();
+        $this->assertSame($record->id, json_decode((string)$this->_response->getBody(), true)['data']['id']);
+        $this->get('/api/disponibilidades/buscar/999.json');
+        $this->assertResponseCode(404);
+    }
+
+    public function testEditsAndActivationPreserveTheAvailability(): void
+    {
+        $this->session(['Auth' => ['User' => ['id' => 1]]]);
+        $this->post('/api/disponibilidades/adicionar.json', $this->dates());
+        $this->assertResponseCode(201);
+        $id = json_decode((string)$this->_response->getBody(), true)['data']['id'];
+        $this->patch('/api/disponibilidades/editar/' . $id . '.json', ['dataFim' => '2026-11-13 15:00:00']);
+        $this->assertResponseOk();
+        $this->delete('/api/disponibilidades/deletar/' . $id . '.json');
+        $this->assertResponseOk();
+        $this->get('/api/disponibilidades/listar.json?id=' . $id);
+        $this->assertResponseOk();
+        $this->assertSame([], json_decode((string)$this->_response->getBody(), true)['data']);
+        $this->post('/api/disponibilidades/reativar/' . $id . '.json');
+        $this->assertResponseOk();
+        $record = $this->getTableLocator()->get('Disponibilidades')->get($id);
+        $this->assertNull($record->deleted);
+        $this->assertSame('15:00:00', $record->dataFim->format('H:i:s'));
+    }
+
+    public function testRejectsReversedIntervalsOnCreateAndPartialEdit(): void
+    {
+        $this->session(['Auth' => ['User' => ['id' => 1]]]);
+        $this->post('/api/disponibilidades/adicionar.json', [
+            'dataInicio' => '2026-11-13 15:00:00', 'dataFim' => '2026-11-13 14:00:00',
+        ]);
+        $this->assertResponseCode(422);
+        $this->post('/api/disponibilidades/adicionar.json', $this->dates());
+        $this->assertResponseCode(201);
+        $id = json_decode((string)$this->_response->getBody(), true)['data']['id'];
+        $this->patch('/api/disponibilidades/editar/' . $id . '.json', ['dataInicio' => '2026-11-13 15:00:00']);
+        $this->assertResponseCode(422);
+        $record = $this->getTableLocator()->get('Disponibilidades')->get($id);
+        $this->assertSame('14:00:00', $record->dataInicio->format('H:i:s'));
+    }
+
+    public function testMutationsRequireTheOwnerAndHandleMissingRecords(): void
+    {
+        foreach (['editar', 'deletar', 'reativar'] as $action) {
+            $this->session(['Auth' => ['User' => ['id' => null]]]);
+            $this->post('/api/disponibilidades/' . $action . '/1.json', $this->dates());
+            $this->assertResponseCode(401);
+            $this->session(['Auth' => ['User' => ['id' => 999]]]);
+            $this->post('/api/disponibilidades/' . $action . '/1.json', $this->dates());
+            $this->assertResponseCode(403);
+            $this->session(['Auth' => ['User' => ['id' => 1]]]);
+            $this->post('/api/disponibilidades/' . $action . '/999.json', $this->dates());
+            $this->assertResponseCode(404);
+        }
+    }
+
+    public function testCanDeactivateALegacyRecordWithAnInvalidInterval(): void
+    {
+        $table = $this->getTableLocator()->get('Disponibilidades');
+        $table->updateAll([
+            'dataInicio' => '2026-11-13 15:00:00', 'dataFim' => '2026-11-13 14:00:00', 'deleted' => null,
+        ], ['id' => 1]);
+        $this->session(['Auth' => ['User' => ['id' => 1]]]);
+        $this->post('/api/disponibilidades/deletar/1.json');
+        $this->assertResponseOk();
+        $this->assertNotNull($table->get(1)->deleted);
+    }
+
     /**
      * @return array<string, string>
      */

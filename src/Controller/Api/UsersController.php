@@ -61,6 +61,9 @@ class UsersController extends AppController
             $params = [];
             foreach (['nome', 'email', 'tipo_id'] as $field) {
                 if (isset($form[$field]) && $form[$field] !== '') {
+                    if (!is_scalar($form[$field])) {
+                        return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
+                    }
                     $sql .= ' AND u.' . $field . ' = :' . $field;
                     $params[$field] = $form[$field];
                 }

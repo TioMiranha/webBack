@@ -114,27 +114,31 @@ class DisponibilidadesController extends AppController
         return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
     }
 
+    /**
+     * Lista os registros ativos e aplica os filtros.
+     */
     public function list(): Response
     {
         $this->request->allowMethod(['get', 'post']);
         $statusCode = 200;
 
         try {
-            $sql = 'SELECT co.id, u.nome, d.dataInicio, d.dataFim AS coordenador, c.nome AS curso
+            $sql = 'SELECT d.id, d.coordenador_id, u.nome AS coordenador,
+                           d.dataInicio, d.dataFim, d.deleted, c.nome AS curso
                     FROM coordenadores co
                     INNER JOIN users u ON u.id = co.users_id
                     INNER JOIN cursos c ON c.id = co.curso_id
                     INNER JOIN disponibilidades d ON d.coordenador_id = co.id
-                    WHERE co.deleted IS NULL';
+                    WHERE d.deleted IS NULL AND co.deleted IS NULL AND u.deleted IS NULL AND c.deleted IS NULL';
 
             $form = $this->request->getData() + $this->request->getQueryParams();
             $params = [];
             $fields = [
-                'id' => 'co.id',
+                'id' => 'd.id',
                 'coordenador' => 'u.nome',
                 'curso' => 'c.nome',
                 'dataInicio' => 'd.dataInicio',
-                'dataFim' => 'd.dataFim'
+                'dataFim' => 'd.dataFim',
             ];
             foreach ($fields as $field => $column) {
                 if (isset($form[$field]) && $form[$field] !== '') {
@@ -145,7 +149,7 @@ class DisponibilidadesController extends AppController
                     $params[$field] = $form[$field];
                 }
             }
-            $sql .= ' ORDER BY co.id';
+            $sql .= ' ORDER BY d.id';
             $conexao = $this->fetchTable('Coordenadores')->getConnection();
             $result = $conexao->execute($sql, $params)->fetchAll('assoc');
         } catch (Exception $e) {
@@ -155,18 +159,22 @@ class DisponibilidadesController extends AppController
         return $this->json(['data' => $result], $statusCode);
     }
 
-     public function find(?string $id = null): Response
+    /**
+     * Consulta o registro pelo ID da rota.
+     */
+    public function find(?string $id = null): Response
     {
         $this->request->allowMethod(['get']);
         $statusCode = 200;
         $result = null;
         try {
-           $sql = 'SELECT co.id, u.nome, d.dataInicio, d.dataFim AS coordenador, c.nome AS curso
+            $sql = 'SELECT d.id, d.coordenador_id, u.nome AS coordenador,
+                           d.dataInicio, d.dataFim, d.deleted, c.nome AS curso
                     FROM coordenadores co
                     INNER JOIN users u ON u.id = co.users_id
                     INNER JOIN cursos c ON c.id = co.curso_id
                     INNER JOIN disponibilidades d ON d.coordenador_id = co.id
-                    WHERE co.id = :id';
+                    WHERE d.id = :id';
             $conexao = $this->fetchTable('Coordenadores')->getConnection();
             $results = $conexao->execute($sql, ['id' => (int)$id])->fetchAll('assoc');
 
@@ -182,9 +190,16 @@ class DisponibilidadesController extends AppController
         return $this->json(['data' => $result], $statusCode);
     }
 
+    /**
+     * Edita o registro identificado na rota.
+     */
     public function edit(?string $id = null): Response
     {
         $this->request->allowMethod(['post', 'put', 'patch']);
+        $usuarioId = $this->request->getSession()->read('Auth.User.id');
+        if (!$usuarioId) {
+            return $this->json(['message' => 'Faça login para alterar sua disponibilidade.'], 401);
+        }
         $tabela = $this->fetchTable('Disponibilidades');
         $statusCode = 422;
         $result = null;
@@ -193,12 +208,19 @@ class DisponibilidadesController extends AppController
 
         try {
             $registro = $tabela->get((int)$id);
+            if (
+                !$this->fetchTable('Coordenadores')->exists([
+                'id' => $registro->coordenador_id, 'users_id' => (int)$usuarioId,
+                ])
+            ) {
+                return $this->json(['message' => 'Esta disponibilidade pertence a outro usuário.'], 403);
+            }
             $form = array_intersect_key($this->request->getData(), array_flip([
                 'dataInicio',
                 'dataFim',
             ]));
             if (!$form) {
-                return $this->json(['message' => 'Informe users_id ou curso_id para editar o vínculo.'], 422);
+                return $this->json(['message' => 'Informe dataInicio ou dataFim para editar a disponibilidade.'], 422);
             }
 
             $registro = $tabela->patchEntity($registro, $form);
@@ -211,6 +233,96 @@ class DisponibilidadesController extends AppController
             if ($tabela->save($registro)) {
                 $result = $registro;
                 $message = 'Registro alterado com sucesso!';
+                $statusCode = 200;
+            } else {
+                $errors = $registro->getErrors();
+            }
+        } catch (RecordNotFoundException $e) {
+            $message = 'Registro não encontrado!';
+            $statusCode = 404;
+        } catch (Exception $e) {
+            $message = 'Erro: ' . $e->getMessage();
+            $statusCode = 500;
+        }
+
+        return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
+    }
+
+    /**
+     * Desativa o registro preservando seu histórico.
+     */
+    public function delete(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post', 'delete']);
+        $usuarioId = $this->request->getSession()->read('Auth.User.id');
+        if (!$usuarioId) {
+            return $this->json(['message' => 'Faça login para alterar sua disponibilidade.'], 401);
+        }
+        $tabela = $this->fetchTable('Disponibilidades');
+        $statusCode = 422;
+        $result = null;
+        $errors = [];
+        $message = 'Não foi possível alterar a ativação do registro.';
+
+        try {
+            $registro = $tabela->get((int)$id);
+            if (
+                !$this->fetchTable('Coordenadores')->exists([
+                'id' => $registro->coordenador_id, 'users_id' => (int)$usuarioId,
+                ])
+            ) {
+                return $this->json(['message' => 'Esta disponibilidade pertence a outro usuário.'], 403);
+            }
+            $registro['deleted'] = date('Y-m-d H:i:s');
+
+            if ($tabela->save($registro)) {
+                $result = $registro;
+                $message = 'Registro desativado com sucesso!';
+                $statusCode = 200;
+            } else {
+                $errors = $registro->getErrors();
+            }
+        } catch (RecordNotFoundException $e) {
+            $message = 'Registro não encontrado!';
+            $statusCode = 404;
+        } catch (Exception $e) {
+            $message = 'Erro: ' . $e->getMessage();
+            $statusCode = 500;
+        }
+
+        return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
+    }
+
+    /**
+     * Reativa o registro existente.
+     */
+    public function active(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post', 'put', 'patch']);
+        $usuarioId = $this->request->getSession()->read('Auth.User.id');
+        if (!$usuarioId) {
+            return $this->json(['message' => 'Faça login para alterar sua disponibilidade.'], 401);
+        }
+        $tabela = $this->fetchTable('Disponibilidades');
+        $statusCode = 422;
+        $result = null;
+        $errors = [];
+        $message = 'Não foi possível alterar a ativação do registro.';
+
+        try {
+            $registro = $tabela->get((int)$id);
+            if (
+                !$this->fetchTable('Coordenadores')->exists([
+                'id' => $registro->coordenador_id, 'users_id' => (int)$usuarioId,
+                ])
+            ) {
+                return $this->json(['message' => 'Esta disponibilidade pertence a outro usuário.'], 403);
+            }
+            $registro['deleted'] = null;
+
+            if ($tabela->save($registro)) {
+                $result = $registro;
+                $message = 'Registro reativado com sucesso!';
                 $statusCode = 200;
             } else {
                 $errors = $registro->getErrors();

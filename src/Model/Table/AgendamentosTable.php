@@ -1,10 +1,8 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -14,7 +12,6 @@ use Cake\Validation\Validator;
  *
  * @property \App\Model\Table\DisponibilidadesTable&\Cake\ORM\Association\BelongsTo $Disponibilidades
  * @property \App\Model\Table\UsersTable&\Cake\ORM\Association\BelongsTo $Users
- *
  * @method \App\Model\Entity\Agendamento newEmptyEntity()
  * @method \App\Model\Entity\Agendamento newEntity(array $data, array $options = [])
  * @method array<\App\Model\Entity\Agendamento> newEntities(array $data, array $options = [])
@@ -28,7 +25,6 @@ use Cake\Validation\Validator;
  * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento> saveManyOrFail(iterable $entities, array $options = [])
  * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento>|false deleteMany(iterable $entities, array $options = [])
  * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento> deleteManyOrFail(iterable $entities, array $options = [])
- *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
 class AgendamentosTable extends Table
@@ -49,13 +45,13 @@ class AgendamentosTable extends Table
 
         $this->addBehavior('Timestamp');
 
+        $this->belongsTo('Responsaveis', ['foreignKey' => 'responsavel_id', 'propertyName' => 'responsavel']);
+        $this->belongsTo('Coordenadores', ['foreignKey' => 'coordenador_id', 'propertyName' => 'coordenador']);
         $this->belongsTo('Disponibilidades', [
             'foreignKey' => 'disponibilidade_id',
-            'joinType' => 'INNER',
         ]);
         $this->belongsTo('Users', [
             'foreignKey' => 'users_id',
-            'joinType' => 'INNER',
         ]);
     }
 
@@ -68,17 +64,31 @@ class AgendamentosTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->integer('disponibilidade_id')
-            ->notEmptyString('disponibilidade_id');
-
-        $validator
-            ->integer('users_id')
-            ->notEmptyString('users_id');
-
-        $validator
             ->scalar('assunto')
             ->requirePresence('assunto', 'create')
             ->notEmptyString('assunto');
+
+        $validator
+            ->date('data', ['ymd'])
+            ->requirePresence('data', 'create')
+            ->notEmptyDate('data');
+
+        $validator
+            ->time('hora')
+            ->requirePresence('hora', 'create')
+            ->notEmptyTime('hora');
+
+        $validator
+            ->integer('responsavel_id')
+            ->greaterThan('responsavel_id', 0)
+            ->requirePresence('responsavel_id', 'create')
+            ->notEmptyString('responsavel_id');
+
+        $validator
+            ->integer('coordenador_id')
+            ->greaterThan('coordenador_id', 0)
+            ->requirePresence('coordenador_id', 'create')
+            ->notEmptyString('coordenador_id');
 
         $validator
             ->integer('status')
@@ -101,8 +111,20 @@ class AgendamentosTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['disponibilidade_id'], 'Disponibilidades'), ['errorField' => 'disponibilidade_id']);
-        $rules->add($rules->existsIn(['users_id'], 'Users'), ['errorField' => 'users_id']);
+        $rules->add(
+            $rules->existsIn(['responsavel_id'], 'Responsaveis', [
+                'allowNullableNulls' => true,
+                'message' => 'Responsável não encontrado. Use o id do vínculo cadastrado em responsaveis.',
+            ]),
+            ['errorField' => 'responsavel_id'],
+        );
+        $rules->add(
+            $rules->existsIn(['coordenador_id'], 'Coordenadores', [
+                'allowNullableNulls' => true,
+                'message' => 'Coordenador não encontrado. Use o id do vínculo cadastrado em coordenadores.',
+            ]),
+            ['errorField' => 'coordenador_id'],
+        );
 
         return $rules;
     }

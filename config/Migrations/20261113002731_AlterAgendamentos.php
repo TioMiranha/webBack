@@ -15,11 +15,10 @@ class AlterAgendamentos extends BaseMigration
      */
     public function change(): void
     {
-        $this->table('agendamentos')
-        ->changeColumn('deleted', 'datetime', [
-            'null' => true,
-            'default' => null,
-        ])
-        ->update();
+        $table = $this->table('agendamentos');
+        // Mantém os vínculos existentes ao permitir agendamentos por data e hora.
+        $table->changeColumn('disponibilidade_id', 'integer', ['null' => true, 'default' => null])
+            ->changeColumn('deleted', 'datetime', ['null' => true, 'default' => null])
+            ->update();
     }
 }

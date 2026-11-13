@@ -26,6 +26,8 @@ class UsersFixture extends TestFixture
                 'email' => 'responsavel@example.com',
                 'telefone' => 1,
                 'tipo_id' => 1,
+                'setor_id' => null,
+                'agendar' => true,
                 'created' => '2026-10-15 20:23:10',
                 'modified' => '2026-10-15 20:23:10',
                 'deleted' => null,

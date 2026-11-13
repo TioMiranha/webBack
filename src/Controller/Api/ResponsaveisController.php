@@ -160,6 +160,9 @@ class ResponsaveisController extends AppController
             $form = $this->request->getData() + $this->request->getQueryParams();
             foreach (['users_id', 'alunos_id'] as $field) {
                 if (isset($form[$field]) && $form[$field] !== '') {
+                    if (!is_scalar($form[$field])) {
+                        return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
+                    }
                     $query->where(['Responsaveis.' . $field => $form[$field]]);
                 }
             }

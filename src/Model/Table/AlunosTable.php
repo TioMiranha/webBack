@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -11,6 +10,7 @@ use Cake\Validation\Validator;
 /**
  * Alunos Model
  *
+ * @property \App\Model\Table\CursosTable&\Cake\ORM\Association\BelongsTo $Cursos
  * @method \App\Model\Entity\Aluno newEmptyEntity()
  * @method \App\Model\Entity\Aluno newEntity(array $data, array $options = [])
  * @method array<\App\Model\Entity\Aluno> newEntities(array $data, array $options = [])
@@ -43,11 +43,12 @@ class AlunosTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        $this->hasMany('Responsaveis', ['foreignKey' => 'alunos_id']);
         $this->belongsTo('Cursos', [
             'foreignKey' => 'curso_id',
             'propertyName' => 'curso_cadastrado',
         ]);
-        $this->hasMany('Responsaveis', ['foreignKey' => 'alunos_id']);
     }
 
     /**
@@ -73,11 +74,6 @@ class AlunosTable extends Table
             ->maxLength('curso', 255)
             ->requirePresence('curso', 'create')
             ->notEmptyString('curso');
-
-        $validator
-            ->integer('curso_id')
-            ->greaterThan('curso_id', 0)
-            ->allowEmptyString('curso_id');
 
         $validator
             ->scalar('situacao')
@@ -107,6 +103,11 @@ class AlunosTable extends Table
             ->scalar('deleted')
             ->maxLength('deleted', 255)
             ->allowEmptyString('deleted');
+
+        $validator
+            ->integer('curso_id')
+            ->greaterThan('curso_id', 0)
+            ->allowEmptyString('curso_id');
 
         return $validator;
     }
@@ -139,7 +140,11 @@ class AlunosTable extends Table
     }
 
     /**
-     * @inheritDoc
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
@@ -147,6 +152,7 @@ class AlunosTable extends Table
             $rules->existsIn(['curso_id'], 'Cursos', ['allowNullableNulls' => true]),
             ['errorField' => 'curso_id'],
         );
+
         $rules->addDelete($rules->isNotLinkedTo('Responsaveis'), ['errorField' => 'id']);
 
         return $rules;

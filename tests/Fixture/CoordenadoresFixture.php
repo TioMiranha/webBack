@@ -22,9 +22,9 @@ class CoordenadoresFixture extends TestFixture
                 'id' => 1,
                 'users_id' => 1,
                 'curso_id' => 1,
-                'created' => '2026-11-12 13:43:44',
-                'modified' => '2026-11-12 13:43:44',
-                'deleted' => '2026-11-12 13:43:44',
+                'created' => '2026-11-13 00:00:37',
+                'modified' => '2026-11-13 00:00:37',
+                'deleted' => '2026-11-13 00:00:37',
             ],
         ];
         parent::init();

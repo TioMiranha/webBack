@@ -166,6 +166,33 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/disponibilidades/desativar/{id}', ['controller' => 'Disponibilidades', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
         $builder->connect('/disponibilidades/reativar/{id}', ['controller' => 'Disponibilidades', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
 
+        $builder->connect('/agendamentos/adicionar', ['controller' => 'Agendamentos', 'action' => 'add']);
+        $builder->connect('/agendamentos/listar', ['controller' => 'Agendamentos', 'action' => 'list']);
+        $builder->connect('/agendamentos/buscar/servidor/{id}', ['controller' => 'Agendamentos', 'action' => 'findByServidor'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect(
+            '/agendamentos/buscar/data/{id}/{data}',
+            ['controller' => 'Agendamentos', 'action' => 'findByServidor']
+        )
+            ->setPass(['id', 'data'])
+            ->setPatterns([
+                'id' => '\d+',
+                'data' => '\d{4}-\d{2}-\d{2}'
+            ]);
+        $builder->connect('/agendamentos/listar/{id}', ['controller' => 'Agendamentos', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/agendamentos/editar/{id}', ['controller' => 'Agendamentos', 'action' => 'edit'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/agendamentos/deletar/{id}', ['controller' => 'Agendamentos', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/agendamentos/desativar/{id}', ['controller' => 'Agendamentos', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/agendamentos/reativar/{id}', ['controller' => 'Agendamentos', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+
+        $builder->connect('/setores/adicionar', ['controller' => 'Setores', 'action' => 'add']);
+        $builder->connect('/setores/listar', ['controller' => 'Setores', 'action' => 'list']);
+        $builder->connect('/setores/buscar/{id}', ['controller' => 'Setores', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/setores/listar/{id}', ['controller' => 'Setores', 'action' => 'find'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/setores/editar/{id}', ['controller' => 'Setores', 'action' => 'edit'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/setores/deletar/{id}', ['controller' => 'Setores', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/setores/desativar/{id}', ['controller' => 'Setores', 'action' => 'delete'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect('/setores/reativar/{id}', ['controller' => 'Setores', 'action' => 'active'])->setPass(['id'])->setPatterns(['id' => '\d+']);
+
         $builder->fallbacks();
     });
 

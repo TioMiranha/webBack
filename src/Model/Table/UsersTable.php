@@ -95,6 +95,14 @@ class UsersTable extends Table
             ->maxLength('deleted', 255)
             ->allowEmptyString('deleted');
 
+        $validator
+            ->integer('setor_id')
+            ->allowEmptyString('setor_id');
+
+        $validator
+            ->boolean('agendar')
+            ->allowEmptyString('agendar');
+
         return $validator;
     }
 
@@ -109,6 +117,7 @@ class UsersTable extends Table
     {
         $rules->add($rules->isUnique(['email']), ['errorField' => 'email']);
         $rules->add($rules->existsIn(['tipo_id'], 'Tipos'), ['errorField' => 'tipo_id']);
+
         $rules->addDelete($rules->isNotLinkedTo('Responsaveis'), ['errorField' => 'id']);
 
         return $rules;

@@ -296,6 +296,9 @@ class AlunosController extends AppController
             $form = $this->request->getData() + $this->request->getQueryParams();
             foreach (['nome', 'matricula'] as $field) {
                 if (isset($form[$field]) && $form[$field] !== '') {
+                    if (!is_scalar($form[$field])) {
+                        return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
+                    }
                     $query->where(['Alunos.' . $field => $form[$field]]);
                 }
             }

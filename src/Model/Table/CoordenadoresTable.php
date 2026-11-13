@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -13,7 +12,6 @@ use Cake\Validation\Validator;
  *
  * @property \App\Model\Table\UsersTable&\Cake\ORM\Association\BelongsTo $Users
  * @property \App\Model\Table\CursosTable&\Cake\ORM\Association\BelongsTo $Cursos
- *
  * @method \App\Model\Entity\Coordenadore newEmptyEntity()
  * @method \App\Model\Entity\Coordenadore newEntity(array $data, array $options = [])
  * @method array<\App\Model\Entity\Coordenadore> newEntities(array $data, array $options = [])
@@ -27,7 +25,6 @@ use Cake\Validation\Validator;
  * @method iterable<\App\Model\Entity\Coordenadore>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Coordenadore> saveManyOrFail(iterable $entities, array $options = [])
  * @method iterable<\App\Model\Entity\Coordenadore>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Coordenadore>|false deleteMany(iterable $entities, array $options = [])
  * @method iterable<\App\Model\Entity\Coordenadore>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Coordenadore> deleteManyOrFail(iterable $entities, array $options = [])
- *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
 class CoordenadoresTable extends Table
@@ -56,7 +53,6 @@ class CoordenadoresTable extends Table
             'foreignKey' => 'curso_id',
             'joinType' => 'INNER',
         ]);
-        $this->setEntityClass(\App\Model\Entity\Coordenadore::class);
     }
 
     /**

@@ -13,6 +13,8 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\DateTime $created
  * @property \Cake\I18n\DateTime $modified
  * @property \Cake\I18n\DateTime|null $deleted
+ *
+ * @property \App\Model\Entity\Aluno[] $alunos
  */
 class Curso extends Entity
 {
@@ -30,5 +32,6 @@ class Curso extends Entity
         'created' => true,
         'modified' => true,
         'deleted' => true,
+        'alunos' => true,
     ];
 }

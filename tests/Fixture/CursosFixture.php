@@ -21,9 +21,9 @@ class CursosFixture extends TestFixture
             [
                 'id' => 1,
                 'nome' => 'Lorem ipsum dolor sit amet',
-                'created' => '2026-11-11 20:56:11',
-                'modified' => '2026-11-11 20:56:11',
-                'deleted' => '2026-11-11 20:56:11',
+                'created' => '2026-11-13 00:00:37',
+                'modified' => '2026-11-13 00:00:37',
+                'deleted' => '2026-11-13 00:00:37',
             ],
         ];
         parent::init();

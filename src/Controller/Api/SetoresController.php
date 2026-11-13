@@ -1,0 +1,216 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controller\Api;
+
+use Cake\Datasource\Exception\RecordNotFoundException;
+use Cake\Http\Response;
+use Exception;
+
+/**
+ * Setores Controller
+ */
+class SetoresController extends AppController
+{
+    /**
+     * Cadastra o registro com os campos permitidos.
+     */
+    public function add(): Response
+    {
+        $this->request->allowMethod(['post']);
+        $tabela = $this->fetchTable('Setors');
+        $statusCode = 422;
+        $result = null;
+        $errors = [];
+        $message = 'Erro ao cadastrar o registro.';
+
+        try {
+            // Aceita somente os campos deste cadastro.
+            $form = array_intersect_key($this->request->getData(), array_flip([
+                'nome',
+            ]));
+            $novoRegistro = $tabela->newEmptyEntity();
+            $novoRegistro = $tabela->patchEntity($novoRegistro, $form);
+
+            if ($tabela->save($novoRegistro)) {
+                $result = $novoRegistro;
+                $message = 'Registro cadastrado com sucesso!';
+                $statusCode = 201;
+            } else {
+                $errors = $novoRegistro->getErrors();
+            }
+        } catch (Exception $e) {
+            $message = 'Erro: ' . $e->getMessage();
+            $statusCode = 500;
+        }
+
+        return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
+    }
+
+    /**
+     * Lista os registros ativos e aplica os filtros.
+     */
+    public function list(): Response
+    {
+        $this->request->allowMethod(['get', 'post']);
+        $statusCode = 200;
+
+        try {
+            $sql = 'SELECT s.id, s.nome AS setor
+                    FROM setors s
+                    WHERE deleted IS NULL';
+            $form = $this->request->getData() + $this->request->getQueryParams();
+            $params = [];
+            foreach (['id', 'nome'] as $field) {
+                if (isset($form[$field]) && $form[$field] !== '') {
+                    if (!is_scalar($form[$field])) {
+                        return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
+                    }
+                    $sql .= ' AND s.' . $field . ' = :' . $field;
+                    $params[$field] = $form[$field];
+                }
+            }
+            $sql .= ' ORDER BY id';
+            $conexao = $this->fetchTable('Setors')->getConnection();
+            $result = $conexao->execute($sql, $params)->fetchAll('assoc');
+        } catch (Exception $e) {
+            return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
+        }
+
+        return $this->json(['data' => $result], $statusCode);
+    }
+
+    /**
+     * Consulta o registro pelo ID da rota.
+     */
+    public function find(?string $id = null): Response
+    {
+        $this->request->allowMethod(['get']);
+        $statusCode = 200;
+        $result = null;
+        try {
+            $sql = 'SELECT id,nome
+                    FROM setors s
+                    WHERE s.id = :id';
+            $conexao = $this->fetchTable('Setors')->getConnection();
+            $results = $conexao->execute($sql, ['id' => (int)$id])->fetchAll('assoc');
+
+            if (!empty($results)) {
+                $result['id'] = (int)$results[0]['id'];
+                $result['nome'] = $results[0]['nome'];
+            } else {
+                return $this->json(['message' => 'Registro não encontrado!', 'code' => 404], 404);
+            }
+        } catch (Exception $e) {
+            return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
+        }
+
+        return $this->json(['data' => $result], $statusCode);
+    }
+
+    /**
+     * Altera o registro identificado na rota.
+     */
+    public function edit(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post', 'put', 'patch']);
+        $tabela = $this->fetchTable('Setors');
+        $statusCode = 422;
+        $result = null;
+        $errors = [];
+        $message = 'Erro ao alterar o registro.';
+
+        try {
+            $registro = $tabela->get((int)$id);
+            $form = array_intersect_key($this->request->getData(), array_flip([
+                'nome',
+            ]));
+
+            $registro = $tabela->patchEntity($registro, $form);
+
+            if ($tabela->save($registro)) {
+                $result = $registro;
+                $message = 'Registro alterado com sucesso!';
+                $statusCode = 200;
+            } else {
+                $errors = $registro->getErrors();
+            }
+        } catch (RecordNotFoundException $e) {
+            $message = 'Registro não encontrado!';
+            $statusCode = 404;
+        } catch (Exception $e) {
+            $message = 'Erro: ' . $e->getMessage();
+            $statusCode = 500;
+        }
+
+        return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
+    }
+
+    /**
+     * Desativa o registro preservando seu histórico.
+     */
+    public function delete(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post', 'delete']);
+        $tabela = $this->fetchTable('Setors');
+        $statusCode = 422;
+        $result = null;
+        $errors = [];
+        $message = 'Não foi possível alterar a ativação do registro.';
+
+        try {
+            $registro = $tabela->get((int)$id);
+            $registro['deleted'] = date('Y-m-d H:i:s');
+
+            if ($tabela->save($registro)) {
+                $result = $registro;
+                $message = 'Registro desativado com sucesso!';
+                $statusCode = 200;
+            } else {
+                $errors = $registro->getErrors();
+            }
+        } catch (RecordNotFoundException $e) {
+            $message = 'Registro não encontrado!';
+            $statusCode = 404;
+        } catch (Exception $e) {
+            $message = 'Erro: ' . $e->getMessage();
+            $statusCode = 500;
+        }
+
+        return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
+    }
+
+    /**
+     * Reativa o registro existente.
+     */
+    public function active(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post', 'put', 'patch']);
+        $tabela = $this->fetchTable('Setors');
+        $statusCode = 422;
+        $result = null;
+        $errors = [];
+        $message = 'Não foi possível alterar a ativação do registro.';
+
+        try {
+            $registro = $tabela->get((int)$id);
+            $registro['deleted'] = null;
+
+            if ($tabela->save($registro)) {
+                $result = $registro;
+                $message = 'Registro reativado com sucesso!';
+                $statusCode = 200;
+            } else {
+                $errors = $registro->getErrors();
+            }
+        } catch (RecordNotFoundException $e) {
+            $message = 'Registro não encontrado!';
+            $statusCode = 404;
+        } catch (Exception $e) {
+            $message = 'Erro: ' . $e->getMessage();
+            $statusCode = 500;
+        }
+
+        return $this->json(['data' => $result, 'message' => $message, 'errors' => $errors], $statusCode);
+    }
+}

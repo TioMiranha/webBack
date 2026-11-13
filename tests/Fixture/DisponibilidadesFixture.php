@@ -21,11 +21,11 @@ class DisponibilidadesFixture extends TestFixture
             [
                 'id' => 1,
                 'coordenador_id' => 1,
-                'dataInicio' => '2026-11-12 18:39:19',
-                'dataFim' => '2026-11-12 18:39:19',
-                'created' => '2026-11-12 18:39:19',
-                'modified' => '2026-11-12 18:39:19',
-                'deleted' => '2026-11-12 18:39:19',
+                'dataInicio' => '2026-11-13 00:00:37',
+                'dataFim' => '2026-11-13 00:30:37',
+                'created' => '2026-11-13 00:00:37',
+                'modified' => '2026-11-13 00:00:37',
+                'deleted' => '2026-11-13 00:00:37',
             ],
         ];
         parent::init();

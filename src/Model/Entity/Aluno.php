@@ -18,7 +18,11 @@ use Cake\ORM\Entity;
  * @property string $anop
  * @property \Cake\I18n\DateTime $created
  * @property \Cake\I18n\DateTime $modified
- * @property string $deleted
+ * @property string|null $deleted
+ * @property int|null $curso_id
+ *
+ * @property \App\Model\Entity\Curso $curso_cadastrado
+ * @property \App\Model\Entity\Responsavel[] $responsaveis
  */
 class Aluno extends Entity
 {
@@ -35,7 +39,6 @@ class Aluno extends Entity
         'nome' => true,
         'matricula' => true,
         'curso' => true,
-        'curso_id' => true,
         'situacao' => true,
         'emaila' => true,
         'emailp' => true,
@@ -43,5 +46,8 @@ class Aluno extends Entity
         'created' => true,
         'modified' => true,
         'deleted' => true,
+        'curso_id' => true,
+        'curso_cadastrado' => true,
+        'responsaveis' => true,
     ];
 }

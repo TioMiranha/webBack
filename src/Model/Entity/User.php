@@ -17,8 +17,11 @@ use Cake\ORM\Entity;
  * @property int $tipo_id
  * @property \Cake\I18n\DateTime $created
  * @property \Cake\I18n\DateTime $modified
- * @property string $deleted
+ * @property string|null $deleted
+ * @property int|null $setor_id
+ * @property bool|null $agendar
  *
+ * @property \App\Model\Entity\Responsavel[] $responsaveis
  * @property \App\Model\Entity\Tipo $tipo
  */
 class User extends Entity
@@ -42,6 +45,9 @@ class User extends Entity
         'created' => true,
         'modified' => true,
         'deleted' => true,
+        'setor_id' => true,
+        'agendar' => true,
+        'responsaveis' => true,
         'tipo' => true,
     ];
 
@@ -55,7 +61,7 @@ class User extends Entity
     ];
 
     /**
-     * Gera o hash da senha antes de persistir o usuário.
+     * Armazena a senha como hash.
      */
     protected function _setPassword(string $password): ?string
     {

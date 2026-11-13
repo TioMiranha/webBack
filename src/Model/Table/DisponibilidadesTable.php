@@ -1,10 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query\SelectQuery;
+use Cake\Datasource\EntityInterface;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -25,7 +24,6 @@ use Cake\Validation\Validator;
  * @method iterable<\App\Model\Entity\Disponibilidade>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Disponibilidade> saveManyOrFail(iterable $entities, array $options = [])
  * @method iterable<\App\Model\Entity\Disponibilidade>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Disponibilidade>|false deleteMany(iterable $entities, array $options = [])
  * @method iterable<\App\Model\Entity\Disponibilidade>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Disponibilidade> deleteManyOrFail(iterable $entities, array $options = [])
- *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
 class DisponibilidadesTable extends Table
@@ -45,6 +43,9 @@ class DisponibilidadesTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        $this->belongsTo('Coordenadores', ['foreignKey' => 'coordenador_id']);
+        $this->hasMany('Agendamentos', ['foreignKey' => 'disponibilidade_id']);
     }
 
     /**
@@ -75,5 +76,21 @@ class DisponibilidadesTable extends Table
             ->allowEmptyDateTime('deleted');
 
         return $validator;
+    }
+
+    /**
+     * Valida o intervalo completo, inclusive quando somente uma data é editada.
+     */
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->existsIn(['coordenador_id'], 'Coordenadores'), ['errorField' => 'coordenador_id']);
+        $rules->add(static function (EntityInterface $entity): bool {
+            return $entity->get('deleted') !== null || $entity->get('dataFim') > $entity->get('dataInicio');
+        }, 'intervalo', [
+            'errorField' => 'dataFim',
+            'message' => 'O fim deve ser posterior ao início da disponibilidade.',
+        ]);
+
+        return $rules;
     }
 }

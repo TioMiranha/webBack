@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 use Cake\Chronos\Chronos;
 use Cake\Core\Configure;
+use Cake\Datasource\ConnectionManager;
 use Cake\TestSuite\ConnectionHelper;
 use Migrations\TestSuite\Migrator;
 
@@ -41,6 +42,19 @@ Chronos::setTestNow(Chronos::now());
 // does not allow the sessionid to be set after stdout
 // has been written to.
 session_id('cli');
+
+// Fixtures and the migrator must never run against the application's database.
+$defaultConfig = ConnectionManager::get('default')->config();
+$testConfig = ConnectionManager::get('test')->config();
+if (
+    $defaultConfig['driver'] === $testConfig['driver']
+    && $defaultConfig['database'] === $testConfig['database']
+    && ($defaultConfig['host'] ?? null) === ($testConfig['host'] ?? null)
+    && ($defaultConfig['port'] ?? null) === ($testConfig['port'] ?? null)
+    && ($defaultConfig['unix_socket'] ?? null) === ($testConfig['unix_socket'] ?? null)
+) {
+    throw new RuntimeException('Configure um banco de testes separado em Datasources.test ou DATABASE_TEST_URL.');
+}
 
 // Connection aliasing needs to happen before migrations are run.
 // Otherwise, table objects inside migrations would use the default datasource

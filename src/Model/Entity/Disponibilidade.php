@@ -14,7 +14,7 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\DateTime $dataFim
  * @property \Cake\I18n\DateTime $created
  * @property \Cake\I18n\DateTime $modified
- * @property \Cake\I18n\DateTime $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  */
 class Disponibilidade extends Entity
 {

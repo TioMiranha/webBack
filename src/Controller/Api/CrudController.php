@@ -32,6 +32,9 @@ abstract class CrudController extends AppController
         $data = $this->request->getData() + $this->request->getQueryParams();
         foreach ($this->filters as $field) {
             if (isset($data[$field]) && $data[$field] !== '') {
+                if (!is_scalar($data[$field])) {
+                    return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
+                }
                 $query->where([$this->tableAlias . '.' . $field => $data[$field]]);
             }
         }
