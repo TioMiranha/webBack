@@ -1,4 +1,6 @@
-# Cadastro de alunos e responsáveis — CakePHP 5
+# Agendamento de atendimentos — CakePHP 5
+
+O CRUD de setores, horários e agendamentos, as buscas solicitadas pelo professor e os exemplos do Insomnia estão em [docs/AGENDAMENTO.md](docs/AGENDAMENTO.md). A coleção pronta está em [docs/insomnia-agenda.json](docs/insomnia-agenda.json) e a consulta SQL corrigida em [docs/sql/agendamentos-por-servidor.sql](docs/sql/agendamentos-por-servidor.sql).
 
 O projeto mantém os cadastros de tipos, usuários e alunos e adiciona a tabela `responsaveis`, conforme o diagrama da atividade.
 
@@ -141,6 +143,6 @@ A inicialização dos testes recusa uma conexão que aponte para o mesmo banco d
 
 ### Agendamentos e disponibilidades
 
-Aplique as migrations antes de usar o cadastro de agendamentos. Ele recebe `responsavel_id` (ID do vínculo em `responsaveis`), `coordenador_id` (ID do vínculo em `coordenadores`), `data` (`AAAA-MM-DD`), `hora`, `assunto` e `status`. As rotas de listar, buscar, editar, desativar e reativar seguem o mesmo formato dos demais cadastros. Os campos legados são preservados; registros antigos podem ter os campos novos vazios.
+Aplique as migrations antes de usar a agenda por setor. O cadastro recebe `servidor_id` e `responsavel_id` (ambos IDs de `users`), `horario_id`, `data` (`AAAA-MM-DD`), `hora` e `assunto` opcional. O antigo vínculo do responsável é preservado em `responsavel_vinculo_id`. Consulte o [roteiro de agendamento](docs/AGENDAMENTO.md) para as buscas por data, servidor, responsável e aluno, cancelamento e coleção do Insomnia. A resposta reúne todos os alunos ativos do responsável e seus cursos.
 
 Disponibilidades são consultadas pelo próprio ID, e o fim deve ser posterior ao início. Cadastro, edição, desativação e reativação exigem login; as alterações são restritas ao dono do vínculo de coordenador.

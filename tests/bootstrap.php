@@ -58,6 +58,7 @@ if (
 
 // Connection aliasing needs to happen before migrations are run.
 // Otherwise, table objects inside migrations would use the default datasource
+ConnectionManager::get('test')->cacheMetadata(false);
 ConnectionHelper::addTestAliases();
 
 // Use migrations to build test database schema.

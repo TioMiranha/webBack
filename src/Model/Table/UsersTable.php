@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use Cake\Datasource\EntityInterface;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -45,6 +46,7 @@ class UsersTable extends Table
         $this->addBehavior('Timestamp');
 
         $this->hasMany('Responsaveis', ['foreignKey' => 'users_id']);
+        $this->belongsTo('Setores', ['className' => 'Setors', 'foreignKey' => 'setor_id', 'propertyName' => 'setor']);
 
         $this->belongsTo('Tipos', [
             'foreignKey' => 'tipo_id',
@@ -101,7 +103,7 @@ class UsersTable extends Table
 
         $validator
             ->boolean('agendar')
-            ->allowEmptyString('agendar');
+            ->notEmptyString('agendar');
 
         return $validator;
     }
@@ -117,6 +119,19 @@ class UsersTable extends Table
     {
         $rules->add($rules->isUnique(['email']), ['errorField' => 'email']);
         $rules->add($rules->existsIn(['tipo_id'], 'Tipos'), ['errorField' => 'tipo_id']);
+        $rules->add(function (EntityInterface $entity): bool {
+            if (!$entity->isNew() && !$entity->isDirty('setor_id') && !$entity->isDirty('agendar')) {
+                return true;
+            }
+            $sector = $entity->get('setor_id');
+            if ($sector === null) {
+                return !$entity->get('agendar');
+            }
+
+            return $this->Setores->exists(['id' => $sector, 'deleted IS' => null]);
+        }, 'setorAtivo', [
+            'errorField' => 'setor_id', 'message' => 'Para atender, informe um setor existente e ativo.',
+        ]);
 
         $rules->addDelete($rules->isNotLinkedTo('Responsaveis'), ['errorField' => 'id']);
 

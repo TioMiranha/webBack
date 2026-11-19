@@ -6,6 +6,7 @@ namespace App\Controller\Api;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Http\Response;
 use Exception;
+use InvalidArgumentException;
 
 /**
  * Setores Controller
@@ -39,6 +40,10 @@ class SetoresController extends AppController
             } else {
                 $errors = $novoRegistro->getErrors();
             }
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -73,6 +78,10 @@ class SetoresController extends AppController
             $sql .= ' ORDER BY id';
             $conexao = $this->fetchTable('Setors')->getConnection();
             $result = $conexao->execute($sql, $params)->fetchAll('assoc');
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
         }
@@ -89,6 +98,8 @@ class SetoresController extends AppController
         $statusCode = 200;
         $result = null;
         try {
+            $registro = $this->localizarRegistro('Setors', $id);
+            $id = (string)$registro->id;
             $sql = 'SELECT id,nome
                     FROM setors s
                     WHERE s.id = :id';
@@ -101,6 +112,12 @@ class SetoresController extends AppController
             } else {
                 return $this->json(['message' => 'Registro não encontrado!', 'code' => 404], 404);
             }
+        } catch (RecordNotFoundException $e) {
+            return $this->json(['message' => 'Registro não encontrado!', 'code' => 404], 404);
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
         }
@@ -121,7 +138,7 @@ class SetoresController extends AppController
         $message = 'Erro ao alterar o registro.';
 
         try {
-            $registro = $tabela->get((int)$id);
+            $registro = $this->localizarRegistro('Setors', $id);
             $form = array_intersect_key($this->request->getData(), array_flip([
                 'nome',
             ]));
@@ -138,6 +155,10 @@ class SetoresController extends AppController
         } catch (RecordNotFoundException $e) {
             $message = 'Registro não encontrado!';
             $statusCode = 404;
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -159,7 +180,7 @@ class SetoresController extends AppController
         $message = 'Não foi possível alterar a ativação do registro.';
 
         try {
-            $registro = $tabela->get((int)$id);
+            $registro = $this->localizarRegistro('Setors', $id);
             $registro['deleted'] = date('Y-m-d H:i:s');
 
             if ($tabela->save($registro)) {
@@ -172,6 +193,10 @@ class SetoresController extends AppController
         } catch (RecordNotFoundException $e) {
             $message = 'Registro não encontrado!';
             $statusCode = 404;
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -193,7 +218,7 @@ class SetoresController extends AppController
         $message = 'Não foi possível alterar a ativação do registro.';
 
         try {
-            $registro = $tabela->get((int)$id);
+            $registro = $this->localizarRegistro('Setors', $id);
             $registro['deleted'] = null;
 
             if ($tabela->save($registro)) {
@@ -206,6 +231,10 @@ class SetoresController extends AppController
         } catch (RecordNotFoundException $e) {
             $message = 'Registro não encontrado!';
             $statusCode = 404;
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;

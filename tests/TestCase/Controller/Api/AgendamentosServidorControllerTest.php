@@ -9,97 +9,76 @@ use Cake\TestSuite\TestCase;
 class AgendamentosServidorControllerTest extends TestCase
 {
     use IntegrationTestTrait;
+    use AgendaTestTrait;
 
     protected array $fixtures = [
-        'app.Tipos', 'app.Users', 'app.Alunos', 'app.Responsaveis',
-        'app.Cursos', 'app.Coordenadores', 'app.Disponibilidades', 'app.Agendamentos',
+        'app.Tipos', 'app.Setors', 'app.Users', 'app.Alunos', 'app.Responsaveis',
+        'app.Cursos', 'app.Coordenadores', 'app.Disponibilidades', 'app.Horarios', 'app.Agendamentos',
     ];
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $connection = $this->getTableLocator()->get('Agendamentos')->getConnection();
-        $timestamps = ['created' => '2026-11-12 12:00:00', 'modified' => '2026-11-12 12:00:00'];
-        $connection->insert('cursos', ['id' => 2, 'nome' => 'Informática', 'deleted' => null] + $timestamps);
-        $connection->insert('coordenadores', [
-            'id' => 10, 'users_id' => 1, 'curso_id' => 2, 'deleted' => null,
-        ] + $timestamps);
-
-        $records = [
-            ['id' => 10, 'data' => '2026-11-15', 'hora' => '14:30:00'],
-            ['id' => 11, 'data' => '2026-11-14', 'hora' => '15:00:00'],
-            ['id' => 12, 'data' => '2026-11-14', 'hora' => '14:30:00', 'deleted' => '2026-11-12 12:00:00'],
-            ['id' => 13, 'coordenador_id' => 1, 'data' => '2026-11-14', 'hora' => '14:30:00'],
-        ];
-        foreach ($records as $record) {
-            $connection->insert('agendamentos', $record + [
-                'coordenador_id' => 10, 'responsavel_id' => 1,
-                'assunto' => 'Reunião', 'status' => 0, 'deleted' => null,
-            ] + $timestamps);
+        $this->seedAgenda();
+        foreach (['2026-11-28', '2026-11-21'] as $date) {
+            $this->post('/api/agendamentos/adicionar.json', array_replace($this->form(), ['data' => $date]));
+            $this->assertResponseCode(201);
         }
     }
 
-    public function testFindByServidorListsAllActiveAppointmentsForTheCoordinatorLink(): void
+    public function testFindByServidorUsesUserIdAndOrdersByDate(): void
     {
-        // O vínculo tem id 10 e users_id 1: a rota recebe o id do vínculo.
         $this->get('/api/agendamentos/buscar/servidor/10.json');
-
         $this->assertResponseOk();
-        $this->assertContentType('application/json');
-        $data = json_decode((string)$this->_response->getBody(), true)['data'];
-        $this->assertCount(2, $data);
-        $this->assertSame([11, 10], array_column($data, 'agendamento_id'));
-        $this->assertSame([10, 10], array_column($data, 'id'));
-        $this->assertSame('Informática', $data[0]['curso']);
-        $this->assertNotEmpty($data[0]['coordenador']);
-        $this->assertNotEmpty($data[0]['responsavel']);
-        $this->assertNotEmpty($data[0]['estudante']);
-        $this->assertSame('2026-11-14', $data[0]['agenda']);
-        $this->assertSame('15:00:00', $data[0]['hora']);
-        $this->assertSame('Reunião', $data[0]['assunto']);
-        $this->assertSame(0, $data[0]['status']);
-        $this->assertResponseNotContains('password');
-    }
-
-    public function testFindByServidorKeepsSingleAppointmentAsAList(): void
-    {
+        $this->assertSame(['2026-11-21', '2026-11-28'], array_column($this->responseData(), 'data'));
         $this->get('/api/agendamentos/buscar/servidor/1.json');
-
         $this->assertResponseOk();
-        $data = json_decode((string)$this->_response->getBody(), true)['data'];
-        $this->assertCount(1, $data);
-        $this->assertSame(13, $data[0]['agendamento_id']);
+        $this->assertSame([], $this->responseData());
     }
 
-    public function testFindByServidorReturnsNotFoundWhenThereAreNoActiveAppointments(): void
+    public function testSearchesByDateResponsibleAndStudentKeepBothStudents(): void
     {
-        $this->getTableLocator()->get('Agendamentos')->updateAll(
-            ['deleted' => '2026-11-12 12:00:00'],
-            ['coordenador_id' => 10],
-        );
-        $this->get('/api/agendamentos/buscar/servidor/10.json');
-
-        $this->assertResponseCode(404);
-        $this->assertSame(404, json_decode((string)$this->_response->getBody(), true)['code']);
+        foreach (
+            [
+            'data/2026-11-21' => 1, 'data/10/2026-11-28' => 1, 'responsavel/1' => 2, 'aluno/2' => 2,
+            ] as $path => $count
+        ) {
+            $this->get('/api/agendamentos/buscar/' . $path . '.json');
+            $this->assertResponseOk();
+            $data = $this->responseData();
+            $this->assertCount($count, $data);
+            $this->assertSame('Ana, Bruno', $data[0]['aluno']);
+            $this->assertSame('Informática, Informática', $data[0]['curso']);
+        }
+        $this->get('/api/agendamentos/listar.json?servidor_id=10&data=2026-11-21');
+        $this->assertCount(1, $this->responseData());
     }
 
-    public function testFindByServidorReturnsNotFoundForUnknownCoordinator(): void
+    public function testExcludesInactiveStudentsWithoutRepeatingAppointments(): void
     {
-        $this->get('/api/agendamentos/buscar/servidor/999.json');
-
-        $this->assertResponseCode(404);
-        $this->assertContentType('application/json');
-        $this->assertSame(
-            'Registro não encontrado!',
-            json_decode((string)$this->_response->getBody(), true)['message'],
-        );
+        $this->getTableLocator()->get('Alunos')->updateAll(['deleted' => '2026-11-19 12:00:00'], ['id' => 2]);
+        $this->get('/api/agendamentos/buscar/responsavel/1.json');
+        $this->assertResponseOk();
+        $this->assertCount(2, $this->responseData());
+        $this->assertSame('Bruno', $this->responseData()[0]['aluno']);
+        $this->get('/api/agendamentos/buscar/aluno/2.json');
+        $this->assertSame([], $this->responseData());
     }
 
-    public function testFindByServidorRejectsPostRequests(): void
+    public function testFiltersAreValidatedAndSqlParametersCannotChangeQuery(): void
     {
+        foreach (
+            [
+            'agendamentos/listar.json?servidor_id[]=10', 'agendamentos/listar.json?data=2026-02-30',
+            'agendamentos/buscar/data/errada.json', 'agendamentos/listar.json?servidor_id=1%20OR%201=1',
+            ] as $path
+        ) {
+            $this->get('/api/' . $path);
+            $this->assertResponseCode(422);
+        }
         $this->post('/api/agendamentos/buscar/servidor/10.json');
-
         $this->assertResponseCode(405);
+        $this->get('/api/agendamentos/buscar/data/2026-11-30.json');
+        $this->assertSame([], $this->responseData());
     }
 }

@@ -6,6 +6,7 @@ namespace App\Controller\Api;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Http\Response;
 use Exception;
+use InvalidArgumentException;
 
 class UsersController extends AppController
 {
@@ -24,8 +25,18 @@ class UsersController extends AppController
         try {
             // Aceita somente os campos deste cadastro.
             $form = array_intersect_key($this->request->getData(), array_flip([
-                'cpf', 'password', 'nome', 'email', 'telefone', 'tipo_id',
+                'cpf', 'password', 'nome', 'email', 'telefone', 'tipo_id', 'tipo_nome', 'perfil_nome', 'tipo', 'perfil',
+                'setor_id', 'setor_nome', 'setor', 'agendar',
             ]));
+            $form = $this->resolverReferencia($form, 'Setors', 'setor_id', 'setor_nome', ['setor']);
+            $form = $this->resolverReferencia(
+                $form,
+                'Tipos',
+                'tipo_id',
+                'tipo_nome',
+                ['perfil_nome', 'tipo', 'perfil'],
+            );
+
             $novoRegistro = $tabela->newEmptyEntity();
             $novoRegistro = $tabela->patchEntity($novoRegistro, $form);
 
@@ -36,6 +47,10 @@ class UsersController extends AppController
             } else {
                 $errors = $novoRegistro->getErrors();
             }
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -53,24 +68,34 @@ class UsersController extends AppController
         $statusCode = 200;
 
         try {
-            $sql = 'SELECT u.id, u.nome, u.cpf, u.telefone, u.email, u.tipo_id, t.nome as perfil
+            $sql = 'SELECT u.id, u.nome, u.cpf, u.telefone, u.email, u.tipo_id, u.setor_id, u.agendar, t.nome as perfil
                     FROM users u
                     INNER JOIN tipos t ON u.tipo_id = t.id
+                    LEFT JOIN setors s ON s.id = u.setor_id
                     WHERE u.deleted IS NULL';
             $form = $this->request->getData() + $this->request->getQueryParams();
             $params = [];
-            foreach (['nome', 'email', 'tipo_id'] as $field) {
+            $campos = [
+                'nome' => 'u.nome', 'email' => 'u.email', 'tipo_id' => 'u.tipo_id',
+                'setor_id' => 'u.setor_id', 'agendar' => 'u.agendar', 'setor_nome' => 's.nome',
+                'tipo_nome' => 't.nome',
+            ];
+            foreach ($campos as $field => $coluna) {
                 if (isset($form[$field]) && $form[$field] !== '') {
                     if (!is_scalar($form[$field])) {
                         return $this->json(['message' => 'Filtro inválido: ' . $field], 422);
                     }
-                    $sql .= ' AND u.' . $field . ' = :' . $field;
+                    $sql .= ' AND ' . $coluna . ' = :' . $field;
                     $params[$field] = $form[$field];
                 }
             }
             $sql .= ' ORDER BY u.id';
             $conexao = $this->fetchTable('Users')->getConnection();
             $result = $conexao->execute($sql, $params)->fetchAll('assoc');
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
         }
@@ -87,7 +112,9 @@ class UsersController extends AppController
         $statusCode = 200;
         $result = null;
         try {
-            $sql = 'SELECT u.id, u.cpf, u.nome, u.email, u.telefone, u.deleted,
+            $registro = $this->localizarRegistro('Users', $id);
+            $id = (string)$registro->id;
+            $sql = 'SELECT u.id, u.cpf, u.nome, u.email, u.telefone, u.deleted, u.setor_id, u.agendar,
                            t.nome as perfil, r.id as vinculo_id, r.deleted as vinculo_deleted,
                            a.id as aluno_id, a.nome as aluno, a.curso
                     FROM users u
@@ -105,6 +132,8 @@ class UsersController extends AppController
                 $result['telefone'] = $results[0]['telefone'];
                 $result['email'] = $results[0]['email'];
                 $result['perfil'] = $results[0]['perfil'];
+                $result['setor_id'] = $results[0]['setor_id'] === null ? null : (int)$results[0]['setor_id'];
+                $result['agendar'] = (bool)$results[0]['agendar'];
                 $result['deleted'] = $results[0]['deleted'];
                 $result['aluno'] = [];
                 $result['responsaveis'] = [];
@@ -123,6 +152,12 @@ class UsersController extends AppController
             } else {
                 return $this->json(['message' => 'Registro não encontrado!', 'code' => 404], 404);
             }
+        } catch (RecordNotFoundException $e) {
+            return $this->json(['message' => 'Registro não encontrado!', 'code' => 404], 404);
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
         }
@@ -143,10 +178,20 @@ class UsersController extends AppController
         $message = 'Erro ao alterar o registro.';
 
         try {
-            $registro = $tabela->get((int)$id);
+            $registro = $this->localizarRegistro('Users', $id);
             $form = array_intersect_key($this->request->getData(), array_flip([
-                'cpf', 'password', 'nome', 'email', 'telefone', 'tipo_id',
+                'cpf', 'password', 'nome', 'email', 'telefone', 'tipo_id', 'tipo_nome', 'perfil_nome', 'tipo', 'perfil',
+                'setor_id', 'setor_nome', 'setor', 'agendar',
             ]));
+            $form = $this->resolverReferencia($form, 'Setors', 'setor_id', 'setor_nome', ['setor']);
+            $form = $this->resolverReferencia(
+                $form,
+                'Tipos',
+                'tipo_id',
+                'tipo_nome',
+                ['perfil_nome', 'tipo', 'perfil'],
+            );
+
             // Uma senha vazia na edição mantém o hash atual.
             if (isset($form['password']) && $form['password'] === '') {
                 unset($form['password']);
@@ -163,6 +208,10 @@ class UsersController extends AppController
         } catch (RecordNotFoundException $e) {
             $message = 'Registro não encontrado!';
             $statusCode = 404;
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -184,7 +233,7 @@ class UsersController extends AppController
         $message = 'Não foi possível alterar a ativação do registro.';
 
         try {
-            $registro = $tabela->get((int)$id);
+            $registro = $this->localizarRegistro('Users', $id);
             $registro['deleted'] = date('Y-m-d H:i:s');
 
             if ($tabela->save($registro)) {
@@ -197,6 +246,10 @@ class UsersController extends AppController
         } catch (RecordNotFoundException $e) {
             $message = 'Registro não encontrado!';
             $statusCode = 404;
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -218,7 +271,7 @@ class UsersController extends AppController
         $message = 'Não foi possível alterar a ativação do registro.';
 
         try {
-            $registro = $tabela->get((int)$id);
+            $registro = $this->localizarRegistro('Users', $id);
             $registro['deleted'] = null;
 
             if ($tabela->save($registro)) {
@@ -231,6 +284,10 @@ class UsersController extends AppController
         } catch (RecordNotFoundException $e) {
             $message = 'Registro não encontrado!';
             $statusCode = 404;
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             $message = 'Erro: ' . $e->getMessage();
             $statusCode = 500;
@@ -258,6 +315,10 @@ class UsersController extends AppController
                 return $this->json(['message' => 'Email ou senha inválidos.'], 401);
             }
             $this->request->getSession()->write('Auth.User.id', $usuario->id);
+        } catch (InvalidArgumentException $e) {
+            return $this->json([
+                'data' => null, 'message' => $e->getMessage(), 'errors' => ['referencia' => [$e->getMessage()]],
+            ], 422);
         } catch (Exception $e) {
             return $this->json(['message' => 'Erro: ' . $e->getMessage()], 500);
         }

@@ -1,0 +1,1173 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-19T17:37:01.962229+00:00",
+  "__export_source": "webBack",
+  "resources": [
+    {
+      "_id": "wrk_agenda_if",
+      "_type": "workspace",
+      "name": "Agenda IF - requisitos do professor",
+      "description": "Use o ambiente para substituir os IDs com os retornados pelas requisições.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_agenda_if",
+      "_type": "environment",
+      "parentId": "wrk_agenda_if",
+      "name": "Ambiente base",
+      "data": {
+        "base_url": "http://localhost:8765",
+        "tipo_id": 1,
+        "setor_id": 1,
+        "servidor_id": 10,
+        "responsavel_id": 2,
+        "aluno_id": 1,
+        "horario_id": 1,
+        "agendamento_id": 1,
+        "data": "2026-11-21",
+        "dia_semana": 6,
+        "servidor_nome": "Daniel",
+        "responsavel_nome": "Maria",
+        "setor_nome": "Administrativo",
+        "aluno_nome": "Ana",
+        "tipo_nome": "Coordenador"
+      }
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_0",
+      "parentId": "wrk_agenda_if",
+      "name": "Criar setor",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/setores/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Administrativo\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 0
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_1",
+      "parentId": "wrk_agenda_if",
+      "name": "Listar perfis para escolher tipo_id",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/perfis/listar.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 1
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_2",
+      "parentId": "wrk_agenda_if",
+      "name": "Criar usuário servidor",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/usuarios/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"cpf\": \"10000000001\",\n  \"nome\": \"Servidor exemplo\",\n  \"email\": \"servidor.exemplo@if.local\",\n  \"password\": \"SenhaDeTeste123\",\n  \"telefone\": \"66999990001\",\n  \"tipo_id\": \"{{ _.tipo_id }}\",\n  \"setor_id\": \"{{ _.setor_id }}\",\n  \"agendar\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 2
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_3",
+      "parentId": "wrk_agenda_if",
+      "name": "Habilitar usuário servidor existente",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/usuarios/editar/{{ _.servidor_id }}.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"setor_id\": \"{{ _.setor_id }}\",\n  \"agendar\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 3
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_4",
+      "parentId": "wrk_agenda_if",
+      "name": "Criar usuário responsável",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/usuarios/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"cpf\": \"10000000002\",\n  \"nome\": \"Responsável exemplo\",\n  \"email\": \"responsavel.exemplo@if.local\",\n  \"password\": \"SenhaDeTeste123\",\n  \"telefone\": \"66999990002\",\n  \"tipo_id\": \"{{ _.tipo_id }}\",\n  \"agendar\": false\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 4
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_5",
+      "parentId": "wrk_agenda_if",
+      "name": "Vincular responsável ao aluno",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/responsaveis/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"users_id\": \"{{ _.responsavel_id }}\",\n  \"alunos_id\": \"{{ _.aluno_id }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 5
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_6",
+      "parentId": "wrk_agenda_if",
+      "name": "Cadastrar horário",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/horarios/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"setor_id\": \"{{ _.setor_id }}\",\n  \"dia_semana\": \"{{ _.dia_semana }}\",\n  \"hora_inicio\": \"13:00:00\",\n  \"hora_fim\": \"18:00:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 6
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_7",
+      "parentId": "wrk_agenda_if",
+      "name": "Listar horários",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/horarios/listar.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 7
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_8",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar horários por dia",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/horarios/buscar/dia/{{ _.dia_semana }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 8
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_9",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar horários por setor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/horarios/buscar/setor/{{ _.setor_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 9
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_10",
+      "parentId": "wrk_agenda_if",
+      "name": "Editar horário",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/horarios/editar/{{ _.horario_id }}.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"hora_fim\": \"17:30:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 10
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_11",
+      "parentId": "wrk_agenda_if",
+      "name": "Desativar horário",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/horarios/deletar/{{ _.horario_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 11
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_12",
+      "parentId": "wrk_agenda_if",
+      "name": "Reativar horário",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/horarios/reativar/{{ _.horario_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 12
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_13",
+      "parentId": "wrk_agenda_if",
+      "name": "Cadastrar reunião",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/agendamentos/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"servidor_id\": \"{{ _.servidor_id }}\",\n  \"responsavel_id\": \"{{ _.responsavel_id }}\",\n  \"horario_id\": \"{{ _.horario_id }}\",\n  \"data\": \"{{ _.data }}\",\n  \"hora\": \"14:30:00\",\n  \"assunto\": \"Acompanhamento do aluno\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 13
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_14",
+      "parentId": "wrk_agenda_if",
+      "name": "Listar reuniões",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/listar.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 14
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_15",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar reunião por ID",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/{{ _.agendamento_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 15
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_16",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar reuniões por data",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/data/{{ _.data }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 16
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_17",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar reuniões por servidor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/servidor/{{ _.servidor_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 17
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_18",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar reuniões por responsável",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/responsavel/{{ _.responsavel_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 18
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_19",
+      "parentId": "wrk_agenda_if",
+      "name": "Buscar reuniões por aluno",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/aluno/{{ _.aluno_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 19
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_20",
+      "parentId": "wrk_agenda_if",
+      "name": "Editar reunião",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/agendamentos/editar/{{ _.agendamento_id }}.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"hora\": \"15:00:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 20
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_21",
+      "parentId": "wrk_agenda_if",
+      "name": "Cancelar reunião",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/agendamentos/cancelar/{{ _.agendamento_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 21
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_22",
+      "parentId": "wrk_agenda_if",
+      "name": "Desativar reunião",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/agendamentos/deletar/{{ _.agendamento_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 22
+    },
+    {
+      "_type": "request",
+      "_id": "req_agenda_23",
+      "parentId": "wrk_agenda_if",
+      "name": "Reativar reunião",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/agendamentos/reativar/{{ _.agendamento_id }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 23
+    },
+    {
+      "_id": "fld_nomes_agenda",
+      "_type": "request_group",
+      "parentId": "wrk_agenda_if",
+      "name": "Alternativas por nome",
+      "metaSortKey": 100
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_0",
+      "parentId": "fld_nomes_agenda",
+      "name": "Habilitar servidor pelo nome",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/usuarios/editar/nome/{{ _.servidor_nome }}.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"setor_nome\": \"{{ _.setor_nome }}\",\n  \"agendar\": true\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 0
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_1",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar usuário pelo nome",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/usuarios/buscar/nome/{{ _.servidor_nome }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 1
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_2",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar setor pelo nome",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/setores/buscar/nome/{{ _.setor_nome }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 2
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_3",
+      "parentId": "fld_nomes_agenda",
+      "name": "Editar setor pelo nome",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/setores/editar/nome/{{ _.setor_nome }}.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"{{ _.setor_nome }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 3
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_4",
+      "parentId": "fld_nomes_agenda",
+      "name": "Vincular responsável e aluno por nome",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/responsaveis/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n  \"aluno_nome\": \"{{ _.aluno_nome }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 4
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_5",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar vínculo por nomes",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/responsaveis/buscar.json?responsavel_nome={{ _.responsavel_nome }}&aluno_nome={{ _.aluno_nome }}",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 5
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_6",
+      "parentId": "fld_nomes_agenda",
+      "name": "Editar vínculo por nomes",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/responsaveis/editar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"aluno_nome\": \"{{ _.aluno_nome }}\"\n  },\n  \"aluno_nome\": \"{{ _.aluno_nome }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 6
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_7",
+      "parentId": "fld_nomes_agenda",
+      "name": "Desativar vínculo por nomes",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/responsaveis/deletar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"aluno_nome\": \"{{ _.aluno_nome }}\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 7
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_8",
+      "parentId": "fld_nomes_agenda",
+      "name": "Reativar vínculo por nomes",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/responsaveis/reativar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"aluno_nome\": \"{{ _.aluno_nome }}\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 8
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_9",
+      "parentId": "fld_nomes_agenda",
+      "name": "Cadastrar horário por setor nome",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/horarios/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"setor_nome\": \"{{ _.setor_nome }}\",\n  \"dia_semana\": \"{{ _.dia_semana }}\",\n  \"hora_inicio\": \"13:00:00\",\n  \"hora_fim\": \"18:00:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 9
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_10",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar horários pelo nome do setor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/horarios/buscar/setor/nome/{{ _.setor_nome }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 10
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_11",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar horário por seletor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/horarios/buscar.json?setor_nome={{ _.setor_nome }}&dia_semana={{ _.dia_semana }}&hora_inicio=13:00:00",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 11
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_12",
+      "parentId": "fld_nomes_agenda",
+      "name": "Editar horário por setor nome",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/horarios/editar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"setor_nome\": \"{{ _.setor_nome }}\",\n    \"dia_semana\": \"{{ _.dia_semana }}\",\n    \"hora_inicio\": \"13:00:00\"\n  },\n  \"hora_fim\": \"18:00:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 12
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_13",
+      "parentId": "fld_nomes_agenda",
+      "name": "Desativar horário por setor nome",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/horarios/deletar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"setor_nome\": \"{{ _.setor_nome }}\",\n    \"dia_semana\": \"{{ _.dia_semana }}\",\n    \"hora_inicio\": \"13:00:00\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 13
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_14",
+      "parentId": "fld_nomes_agenda",
+      "name": "Reativar horário por setor nome",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/horarios/reativar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"setor_nome\": \"{{ _.setor_nome }}\",\n    \"dia_semana\": \"{{ _.dia_semana }}\",\n    \"hora_inicio\": \"13:00:00\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 14
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_15",
+      "parentId": "fld_nomes_agenda",
+      "name": "Cadastrar reunião por nomes",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/agendamentos/adicionar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"servidor_nome\": \"{{ _.servidor_nome }}\",\n  \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n  \"data\": \"{{ _.data }}\",\n  \"hora\": \"14:30:00\",\n  \"setor_nome\": \"{{ _.setor_nome }}\",\n  \"assunto\": \"Reunião cadastrada por nomes\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 15
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_16",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar reuniões por nome do servidor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/servidor/nome/{{ _.servidor_nome }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 16
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_17",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar reuniões por nome do responsável",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/responsavel/nome/{{ _.responsavel_nome }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 17
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_18",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar reuniões por nome do aluno",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar/aluno/nome/{{ _.aluno_nome }}.json",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 18
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_19",
+      "parentId": "fld_nomes_agenda",
+      "name": "Buscar reunião por seletor",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/agendamentos/buscar.json?servidor_nome={{ _.servidor_nome }}&responsavel_nome={{ _.responsavel_nome }}&data={{ _.data }}&hora=14:30:00",
+      "body": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 19
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_20",
+      "parentId": "fld_nomes_agenda",
+      "name": "Editar reunião por nomes",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/agendamentos/editar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"servidor_nome\": \"{{ _.servidor_nome }}\",\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"data\": \"{{ _.data }}\",\n    \"hora\": \"14:30:00\"\n  },\n  \"assunto\": \"Assunto alterado por nomes\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 20
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_21",
+      "parentId": "fld_nomes_agenda",
+      "name": "Cancelar reunião por nomes",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/agendamentos/cancelar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"servidor_nome\": \"{{ _.servidor_nome }}\",\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"data\": \"{{ _.data }}\",\n    \"hora\": \"14:30:00\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 21
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_22",
+      "parentId": "fld_nomes_agenda",
+      "name": "Desativar reunião por nomes",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/agendamentos/deletar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"servidor_nome\": \"{{ _.servidor_nome }}\",\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"data\": \"{{ _.data }}\",\n    \"hora\": \"14:30:00\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 22
+    },
+    {
+      "_type": "request",
+      "_id": "req_nomes_23",
+      "parentId": "fld_nomes_agenda",
+      "name": "Reativar reunião por nomes",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/agendamentos/reativar.json",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"seletor\": {\n    \"servidor_nome\": \"{{ _.servidor_nome }}\",\n    \"responsavel_nome\": \"{{ _.responsavel_nome }}\",\n    \"data\": \"{{ _.data }}\",\n    \"hora\": \"14:30:00\"\n  }\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 23
+    }
+  ]
+}

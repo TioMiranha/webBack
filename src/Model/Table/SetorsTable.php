@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Model\Entity\Setor;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
@@ -19,6 +20,7 @@ class SetorsTable extends Table
         parent::initialize($config);
 
         $this->setTable('setors');
+        $this->setEntityClass(Setor::class);
         $this->setDisplayField('nome');
         $this->setPrimaryKey('id');
 

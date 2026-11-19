@@ -3,75 +3,60 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Model\Table;
 
-use App\Model\Table\AgendamentosTable;
+use Cake\Database\Exception\QueryException;
 use Cake\TestSuite\TestCase;
 
-/**
- * App\Model\Table\AgendamentosTable Test Case
- */
 class AgendamentosTableTest extends TestCase
 {
-    /**
-     * Test subject
-     *
-     * @var \App\Model\Table\AgendamentosTable
-     */
-    protected $Agendamentos;
-
-    /**
-     * Fixtures
-     *
-     * @var array<string>
-     */
     protected array $fixtures = [
-        'app.Agendamentos',
-        'app.Disponibilidades',
-        'app.Users',
+        'app.Tipos', 'app.Setors', 'app.Users', 'app.Alunos', 'app.Responsaveis',
+        'app.Cursos', 'app.Coordenadores', 'app.Disponibilidades', 'app.Horarios', 'app.Agendamentos',
     ];
 
-    /**
-     * setUp method
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $config = $this->getTableLocator()->exists('Agendamentos') ? [] : ['className' => AgendamentosTable::class];
-        $this->Agendamentos = $this->getTableLocator()->get('Agendamentos', $config);
-    }
-
-    /**
-     * tearDown method
-     *
-     * @return void
-     */
-    protected function tearDown(): void
-    {
-        unset($this->Agendamentos);
-
-        parent::tearDown();
-    }
-
-    /**
-     * Test validationDefault method
-     *
-     * @return void
-     * @link \App\Model\Table\AgendamentosTable::validationDefault()
-     */
     public function testValidationDefault(): void
     {
-        $this->markTestIncomplete('Not implemented yet.');
+        $table = $this->getTableLocator()->get('Agendamentos');
+        $record = $table->newEntity([
+            'servidor_id' => 1, 'responsavel_id' => 1, 'horario_id' => 1,
+            'data' => '2026-02-30', 'hora' => '25:00:00',
+        ]);
+        $this->assertArrayHasKey('data', $record->getErrors());
+        $this->assertArrayHasKey('hora', $record->getErrors());
+        $this->assertFalse($table->save($record));
     }
 
-    /**
-     * Test buildRules method
-     *
-     * @return void
-     * @link \App\Model\Table\AgendamentosTable::buildRules()
-     */
-    public function testBuildRules(): void
+    public function testDatabasePreventsDuplicateActiveReservationsEvenWithoutOrm(): void
     {
-        $this->markTestIncomplete('Not implemented yet.');
+        $db = $this->getTableLocator()->get('Agendamentos')->getConnection();
+        $fields = [
+            'servidor_id' => 1, 'responsavel_id' => 1, 'horario_id' => 1,
+            'data' => '2026-11-21', 'hora' => '14:30:00', 'reserva_ativa' => 1,
+            'created' => '2026-11-19 12:00:00', 'modified' => '2026-11-19 12:00:00',
+        ];
+        $db->insert('agendamentos', $fields);
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('SQLSTATE[23000]');
+        $db->insert('agendamentos', $fields);
+    }
+
+    public function testNewAppointmentDoesNotRequireLegacyLinksAndKeepsHistory(): void
+    {
+        $db = $this->getTableLocator()->get('Agendamentos')->getConnection();
+        $schema = $db->getSchemaCollection()->describe('agendamentos');
+        $this->assertTrue($schema->getColumn('responsavel_vinculo_id')['null']);
+        $this->assertTrue($schema->getColumn('coordenador_id')['null']);
+        $db->update('agendamentos', ['responsavel_vinculo_id' => 1, 'coordenador_id' => 1], ['id' => 1]);
+
+        $db->insert('agendamentos', [
+            'servidor_id' => 1, 'responsavel_id' => 1, 'horario_id' => 1,
+            'data' => '2026-11-21', 'hora' => '14:30:00', 'reserva_ativa' => 1,
+            'created' => '2026-11-19 12:00:00', 'modified' => '2026-11-19 12:00:00',
+        ]);
+        $result = $db->execute('SELECT * FROM agendamentos WHERE id != 1')->fetch('assoc');
+        $this->assertNull($result['responsavel_vinculo_id']);
+        $this->assertNull($result['coordenador_id']);
+        $old = $db->execute('SELECT * FROM agendamentos WHERE id=1')->fetch('assoc');
+        $this->assertSame(1, (int)$old['responsavel_vinculo_id']);
+        $this->assertSame(1, (int)$old['coordenador_id']);
     }
 }

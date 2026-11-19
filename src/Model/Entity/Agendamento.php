@@ -36,6 +36,8 @@ class Agendamento extends Entity
      * @var array<string, bool>
      */
     protected array $_accessible = [
+        'servidor_id' => true,
+        'horario_id' => true,
         'responsavel_id' => true,
         'coordenador_id' => true,
         'data' => true,

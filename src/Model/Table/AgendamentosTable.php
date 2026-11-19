@@ -3,37 +3,17 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use ArrayObject;
+use Cake\Datasource\EntityInterface;
+use Cake\Event\EventInterface;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-/**
- * Agendamentos Model
- *
- * @property \App\Model\Table\DisponibilidadesTable&\Cake\ORM\Association\BelongsTo $Disponibilidades
- * @property \App\Model\Table\UsersTable&\Cake\ORM\Association\BelongsTo $Users
- * @method \App\Model\Entity\Agendamento newEmptyEntity()
- * @method \App\Model\Entity\Agendamento newEntity(array $data, array $options = [])
- * @method array<\App\Model\Entity\Agendamento> newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\Agendamento get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
- * @method \App\Model\Entity\Agendamento findOrCreate($search, ?callable $callback = null, array $options = [])
- * @method \App\Model\Entity\Agendamento patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method array<\App\Model\Entity\Agendamento> patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\Agendamento|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
- * @method \App\Model\Entity\Agendamento saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
- * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento>|false saveMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento> saveManyOrFail(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento>|false deleteMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\Agendamento>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\Agendamento> deleteManyOrFail(iterable $entities, array $options = [])
- * @mixin \Cake\ORM\Behavior\TimestampBehavior
- */
 class AgendamentosTable extends Table
 {
     /**
-     * Initialize method
-     *
-     * @param array<string, mixed> $config The configuration for the Table.
-     * @return void
+     * Configura as relações com usuários e horários.
      */
     public function initialize(array $config): void
     {
@@ -45,28 +25,31 @@ class AgendamentosTable extends Table
 
         $this->addBehavior('Timestamp');
 
-        $this->belongsTo('Responsaveis', ['foreignKey' => 'responsavel_id', 'propertyName' => 'responsavel']);
-        $this->belongsTo('Coordenadores', ['foreignKey' => 'coordenador_id', 'propertyName' => 'coordenador']);
-        $this->belongsTo('Disponibilidades', [
-            'foreignKey' => 'disponibilidade_id',
+        $this->belongsTo('Servidores', [
+            'className' => 'Users',
+            'foreignKey' => 'servidor_id',
         ]);
-        $this->belongsTo('Users', [
-            'foreignKey' => 'users_id',
+        $this->belongsTo('ResponsaveisUsuarios', [
+            'className' => 'Users',
+            'foreignKey' => 'responsavel_id',
+        ]);
+        $this->belongsTo('Horarios', [
+            'foreignKey' => 'horario_id',
         ]);
     }
 
     /**
-     * Default validation rules.
-     *
-     * @param \Cake\Validation\Validator $validator Validator instance.
-     * @return \Cake\Validation\Validator
+     * Valida os campos de uma reunião.
      */
     public function validationDefault(Validator $validator): Validator
     {
-        $validator
-            ->scalar('assunto')
-            ->requirePresence('assunto', 'create')
-            ->notEmptyString('assunto');
+        foreach (['servidor_id', 'responsavel_id', 'horario_id'] as $field) {
+            $validator
+                ->integer($field)
+                ->greaterThan($field, 0)
+                ->requirePresence($field, 'create')
+                ->notEmptyString($field);
+        }
 
         $validator
             ->date('data', ['ymd'])
@@ -79,53 +62,110 @@ class AgendamentosTable extends Table
             ->notEmptyTime('hora');
 
         $validator
-            ->integer('responsavel_id')
-            ->greaterThan('responsavel_id', 0)
-            ->requirePresence('responsavel_id', 'create')
-            ->notEmptyString('responsavel_id');
-
-        $validator
-            ->integer('coordenador_id')
-            ->greaterThan('coordenador_id', 0)
-            ->requirePresence('coordenador_id', 'create')
-            ->notEmptyString('coordenador_id');
-
-        $validator
-            ->integer('status')
-            ->requirePresence('status', 'create')
-            ->notEmptyString('status');
-
-        $validator
-            ->dateTime('deleted')
-            ->allowEmptyDateTime('deleted');
+            ->scalar('assunto')
+            ->allowEmptyString('assunto');
 
         return $validator;
     }
 
     /**
-     * Returns a rules checker object that will be used for validating
-     * application integrity.
-     *
-     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
-     * @return \Cake\ORM\RulesChecker
+     * Verifica responsáveis, atendimento no setor e reserva exclusiva.
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add(
-            $rules->existsIn(['responsavel_id'], 'Responsaveis', [
-                'allowNullableNulls' => true,
-                'message' => 'Responsável não encontrado. Use o id do vínculo cadastrado em responsaveis.',
-            ]),
-            ['errorField' => 'responsavel_id'],
-        );
-        $rules->add(
-            $rules->existsIn(['coordenador_id'], 'Coordenadores', [
-                'allowNullableNulls' => true,
-                'message' => 'Coordenador não encontrado. Use o id do vínculo cadastrado em coordenadores.',
-            ]),
-            ['errorField' => 'coordenador_id'],
-        );
+        $rules->add(function (EntityInterface $entity): bool {
+            return !$this->occupiesSlot($entity) || ($entity->get('servidor_id') !== null && $this->Servidores->exists([
+                'id' => $entity->get('servidor_id'), 'deleted IS' => null, 'agendar' => true,
+            ]));
+        }, 'servidorAtivo', [
+            'errorField' => 'servidor_id',
+            'message' => 'Selecione um servidor ativo e habilitado para atender (agendar=true).',
+        ]);
+        $rules->add(function (EntityInterface $entity): bool {
+            if (!$this->occupiesSlot($entity)) {
+                return true;
+            }
+            if (
+                $entity->get('responsavel_id') === null || !$this->ResponsaveisUsuarios->exists([
+                'id' => $entity->get('responsavel_id'), 'deleted IS' => null,
+                ])
+            ) {
+                return false;
+            }
+
+            return $this->ResponsaveisUsuarios->Responsaveis->find()->innerJoinWith('Alunos')->where([
+                'Responsaveis.users_id' => $entity->get('responsavel_id'),
+                'Responsaveis.deleted IS' => null, 'Alunos.deleted IS' => null,
+            ])->count() > 0;
+        }, 'responsavelAtivo', [
+            'errorField' => 'responsavel_id',
+            'message' => 'Selecione um usuário ativo vinculado a pelo menos um aluno ativo.',
+        ]);
+        $rules->add(function (EntityInterface $entity): bool {
+            if (!$this->occupiesSlot($entity)) {
+                return true;
+            }
+            foreach (['servidor_id', 'horario_id', 'data', 'hora'] as $field) {
+                if ($entity->get($field) === null) {
+                    return false;
+                }
+            }
+            $window = $this->Horarios->find()->where([
+                'id' => $entity->get('horario_id'), 'deleted IS' => null,
+            ])->first();
+            $server = $this->Servidores->find()->where(['id' => $entity->get('servidor_id')])->first();
+            if (!$window || !$server || (int)$server->setor_id !== (int)$window->setor_id) {
+                return false;
+            }
+            if (!$this->Horarios->Setores->exists(['id' => $window->setor_id, 'deleted IS' => null])) {
+                return false;
+            }
+            $time = $entity->get('hora')->format('H:i:s');
+
+            return (int)$entity->get('data')->format('N') === (int)$window->dia_semana
+                && $time >= $window->hora_inicio->format('H:i:s') && $time < $window->hora_fim->format('H:i:s');
+        }, 'horarioDisponivel', [
+            'errorField' => 'horario_id',
+            'message' => 'A data e hora devem estar dentro de um horário ativo do setor do servidor.',
+        ]);
+        $rules->add(function (EntityInterface $entity): bool {
+            if (!$this->occupiesSlot($entity)) {
+                return true;
+            }
+            foreach (['servidor_id', 'data', 'hora'] as $field) {
+                if ($entity->get($field) === null) {
+                    return false;
+                }
+            }
+            $conditions = [
+                'servidor_id' => $entity->get('servidor_id'), 'data' => $entity->get('data'),
+                'hora' => $entity->get('hora'), 'deleted IS' => null, 'cancelado_em IS' => null,
+            ];
+            if (!$entity->isNew()) {
+                $conditions['id !='] = $entity->get('id');
+            }
+
+            return !$this->exists($conditions);
+        }, 'reservaUnica', [
+            'errorField' => 'hora', 'message' => 'Este servidor já possui agendamento nesta data e hora.',
+        ]);
 
         return $rules;
+    }
+
+    /**
+     * Mantém a chave de exclusividade somente para reservas ativas.
+     */
+    public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
+    {
+        $entity->set('reserva_ativa', $this->occupiesSlot($entity) ? 1 : null);
+    }
+
+    /**
+     * Informa se a reunião ocupa a data e hora do servidor.
+     */
+    private function occupiesSlot(EntityInterface $entity): bool
+    {
+        return $entity->get('deleted') === null && $entity->get('cancelado_em') === null;
     }
 }

@@ -22,9 +22,12 @@ class AlignAgendamentosFields extends BaseMigration
         if (!$table->hasColumn('disponibilidade_id')) {
             $table->addColumn('disponibilidade_id', 'integer', ['null' => true, 'default' => null]);
         }
-        $table->changeColumn('users_id', 'integer', ['null' => true, 'default' => null])
-            ->changeColumn('deleted', 'datetime', ['null' => true, 'default' => null])
-            ->update();
+        if (!$table->hasColumn('users_id')) {
+            $table->addColumn('users_id', 'integer', ['null' => true, 'default' => null]);
+        } else {
+            $table->changeColumn('users_id', 'integer', ['null' => true, 'default' => null]);
+        }
+        $table->changeColumn('deleted', 'datetime', ['null' => true, 'default' => null])->update();
 
         // Também atende bancos onde CreateUsers já foi aplicada antes destes campos.
         $users = $this->table('users');
