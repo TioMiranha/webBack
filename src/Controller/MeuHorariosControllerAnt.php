@@ -142,7 +142,6 @@ class HorariosController extends AppController
         try {
             $tabela = $this->fetchTable('Horarios');
             $conexao = $tabela->getConnection();
-            $form = $this->request->getData() + $this->request->getQueryParams();
 
             $sql = 'SELECT horarios.id,
                            horarios.setor_id,
@@ -153,61 +152,10 @@ class HorariosController extends AppController
                     FROM horarios
                     INNER JOIN setors ON horarios.setor_id = setors.id
                     WHERE horarios.deleted IS NULL
-                    AND setors.deleted IS NULL';
-            $params = [];
+                    AND setors.deleted IS NULL
+                    ORDER BY horarios.dia_semana, horarios.hora_inicio, horarios.id';
 
-            if (isset($form['setor_id']) && $form['setor_id'] != '') {
-                if (!is_numeric($form['setor_id'])) {
-                    return $this->json(['message' => 'O ID do setor precisa ser um número.'], 422);
-                }
-
-                if ($form['setor_id'] < 1) {
-                    return $this->json(['message' => 'ID do setor inválido.'], 422);
-                }
-
-                $setorId = (int)$form['setor_id'];
-                if ($setorId != $form['setor_id']) {
-                    return $this->json(['message' => 'O ID do setor precisa ser inteiro.'], 422);
-                }
-
-                $sql .= ' AND horarios.setor_id = :setor_id';
-                $params['setor_id'] = $setorId;
-            }
-
-            if (isset($form['dia_semana']) && $form['dia_semana'] != '') {
-                if (!is_numeric($form['dia_semana'])) {
-                    return $this->json(['message' => 'O dia da semana precisa ser um número.'], 422);
-                }
-
-                if ($form['dia_semana'] < 1 || $form['dia_semana'] > 7) {
-                    return $this->json(['message' => 'Dia da semana inválido.'], 422);
-                }
-
-                $dia = (int)$form['dia_semana'];
-                if ($dia != $form['dia_semana']) {
-                    return $this->json(['message' => 'O dia da semana precisa ser inteiro.'], 422);
-                }
-
-                $sql .= ' AND horarios.dia_semana = :dia_semana';
-                $params['dia_semana'] = $dia;
-            }
-
-            if (isset($form['setor_nome']) && $form['setor_nome'] != '') {
-                if (!is_string($form['setor_nome'])) {
-                    return $this->json(['message' => 'O nome do setor precisa ser um texto.'], 422);
-                }
-
-                $nome = trim($form['setor_nome']);
-                if ($nome == '') {
-                    return $this->json(['message' => 'Nome do setor inválido.'], 422);
-                }
-
-                $sql .= ' AND setors.nome = :setor_nome';
-                $params['setor_nome'] = $nome;
-            }
-
-            $sql .= ' ORDER BY horarios.dia_semana, horarios.hora_inicio, horarios.id';
-            $result = $conexao->execute($sql, $params)->fetchAll('assoc');
+            $result = $conexao->execute($sql)->fetchAll('assoc');
 
             return $this->json(['data' => $result], 200);
         } catch (Exception $e) {
@@ -220,19 +168,6 @@ class HorariosController extends AppController
         $this->request->allowMethod(['get']);
         $statusCode = 200;
 
-        if (!is_numeric($id)) {
-            return $this->json(['message' => 'O ID do horário precisa ser um número.'], 422);
-        }
-
-        if ($id < 1) {
-            return $this->json(['message' => 'ID do horário inválido.'], 422);
-        }
-
-        $horarioId = (int)$id;
-        if ($horarioId != $id) {
-            return $this->json(['message' => 'O ID do horário precisa ser inteiro.'], 422);
-        }
-
         try {
             $tabela = $this->fetchTable('Horarios');
             $conexao = $tabela->getConnection();
@@ -242,7 +177,7 @@ class HorariosController extends AppController
                     WHERE id = :id
                     AND deleted IS NULL';
 
-            $params = ['id' => $horarioId];
+            $params = ['id' => $id];
             $result = $conexao->execute($sql, $params)->fetch('assoc');
 
             if (!$result) {
