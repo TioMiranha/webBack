@@ -106,39 +106,13 @@ Listagens aceitam os filtros `servidor_nome`, `responsavel_nome`, `aluno_nome` e
 
 Use `/api/usuarios/editar/nome/Daniel.json`, `/api/usuarios/deletar/nome/Daniel.json` ou `/api/usuarios/reativar/nome/Daniel.json`. Para setores, use as mesmas ações em `/api/setores/.../nome/Administrativo.json`. Os métodos HTTP são os mesmos das rotas por ID. Para renomear, o nome antigo fica na URL e o novo vai no Body: `{"nome":"Novo nome"}`.
 
-**Identificar uma reunião, horário ou vínculo sem ID:**
+**Identificar uma reunião, horário ou vínculo:**
 
-Esses registros não têm nome próprio. Use um `seletor` no Body JSON das rotas sem ID. Ele identifica o registro atual, enquanto os demais campos indicam o que será alterado:
-
-```http
-PATCH /api/agendamentos/editar.json
-Content-Type: application/json
-
-{
-  "seletor": {
-    "servidor_nome": "Daniel",
-    "responsavel_nome": "Maria",
-    "data": "2026-11-21",
-    "hora": "14:30:00"
-  },
-  "hora": "15:00:00"
-}
-```
-
-Depois dessa edição, o seletor deve usar `"hora":"15:00:00"`. O mesmo formato serve para `DELETE /api/agendamentos/deletar.json`, `POST /api/agendamentos/reativar.json` e `PATCH /api/agendamentos/cancelar.json`, enviando somente o `seletor`.
-
-| Recurso | Campos aceitos no seletor |
-|---|---|
-| Usuários e setores | `id`, `nome` |
-| Horários | `id`, `setor_id`, `setor_nome`, `dia_semana`, `hora_inicio`, `hora_fim` |
-| Vínculos de responsáveis | `id`, `users_id`, `alunos_id`, `responsavel_nome`, `aluno_nome` |
-| Agendamentos | `id`, `servidor_id`, `responsavel_id`, `servidor_nome`, `responsavel_nome`, `horario_id`, `setor_nome`, `data`, `hora` |
-
-Para horários, por exemplo, use `{"seletor":{"setor_nome":"Administrativo","dia_semana":6,"hora_inicio":"13:00:00"}}` nas ações sem ID. Para vínculos, use `{"seletor":{"responsavel_nome":"Maria","aluno_nome":"Ana"}}`.
-
-Para buscar um único registro sem ID, envie os campos do seletor nos **Query Parameters** de `GET /api/horarios/buscar.json`, `GET /api/responsaveis/buscar.json` ou `GET /api/agendamentos/buscar.json`. Exemplo: `/api/agendamentos/buscar.json?servidor_nome=Daniel&data=2026-11-21&hora=15:00:00`.
-
-O seletor precisa identificar exatamente um registro: nenhum resultado retorna `404`; vários resultados ou seletor inválido retornam `422`, sem alterar registros. Registros desativados também entram na identificação, permitindo reativação. As rotas por ID e suas regras de validação continuam disponíveis.
+Informe o ID na URL: `GET /api/agendamentos/buscar/1.json`,
+`PATCH /api/agendamentos/editar/1.json`, `DELETE /api/agendamentos/deletar/1.json`,
+`POST /api/agendamentos/reativar/1.json` ou `PATCH /api/agendamentos/cancelar/1.json`.
+Para horários e vínculos, use as mesmas ações em `/api/horarios` e `/api/responsaveis`.
+O corpo da edição contém somente os campos que serão alterados, por exemplo `{"hora":"15:00:00"}`.
 
 ## Rotas
 

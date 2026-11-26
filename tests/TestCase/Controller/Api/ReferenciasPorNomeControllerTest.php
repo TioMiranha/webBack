@@ -124,7 +124,7 @@ class ReferenciasPorNomeControllerTest extends TestCase
             $this->assertCount(1, $this->responseData());
             $this->assertSame('Ana, Bruno', $this->responseData()[0]['aluno']);
         }
-        $filters = $this->seletorAgendamento() + ['aluno_nome' => 'Ana', 'setor_nome' => 'Secretaria'];
+        $filters = $this->filtrosAgendamento() + ['aluno_nome' => 'Ana', 'setor_nome' => 'Secretaria'];
         $this->get('/api/agendamentos/listar.json?' . http_build_query($filters));
         $this->assertResponseOk((string)$this->_response->getBody());
         $this->assertCount(1, $this->responseData());
@@ -135,46 +135,52 @@ class ReferenciasPorNomeControllerTest extends TestCase
         $this->assertSame([], $this->responseData());
     }
 
-    public function testFindEditDeleteReactivateAndCancelAppointmentWithSelector(): void
+    public function testFindEditDeleteReactivateAndCancelAppointmentWithRouteId(): void
     {
         $this->post('/api/agendamentos/adicionar.json', $this->formNomes());
         $this->assertResponseCode(201);
         $id = $this->responseData()['id'];
-        $selector = $this->seletorAgendamento();
-        $this->get('/api/agendamentos/buscar.json?' . http_build_query($selector));
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->get('/api/agendamentos/buscar/' . $id . '.json');
+        $this->assertResponseOk();
         $this->assertSame($id, $this->responseData()['id']);
-        $this->patch('/api/agendamentos/editar.json', ['seletor' => $selector, 'hora' => '15:00:00']);
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->patch('/api/agendamentos/editar/' . $id . '.json', ['hora' => '15:00:00']);
+        $this->assertResponseOk();
         $this->assertSame('15:00:00', $this->responseData()['hora']);
-        $selector['hora'] = '15:00:00';
-        $this->deleteJson('/api/agendamentos/deletar.json', ['seletor' => $selector]);
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->delete('/api/agendamentos/deletar/' . $id . '.json');
+        $this->assertResponseOk();
         $this->assertNotNull($this->responseData()['deleted']);
-        $this->post('/api/agendamentos/reativar.json', ['seletor' => $selector]);
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->post('/api/agendamentos/reativar/' . $id . '.json');
+        $this->assertResponseOk();
         $this->assertNull($this->responseData()['deleted']);
-        $this->patch('/api/agendamentos/cancelar.json', ['seletor' => $selector]);
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->patch('/api/agendamentos/cancelar/' . $id . '.json');
+        $this->assertResponseOk();
         $this->assertTrue($this->responseData()['cancelado']);
     }
 
-    public function testAmbiguousOrInvalidSelectorsNeverUpdateOrDeleteMultipleRecords(): void
+    public function testRemovedSelectorRoutesNeverReadOrChangeRecords(): void
     {
-        $this->post('/api/agendamentos/adicionar.json', $this->formNomes());
+        $this->post('/api/agendamentos/adicionar.json', $this->form());
         $this->assertResponseCode(201);
         $id = $this->responseData()['id'];
-        $this->post('/api/agendamentos/adicionar.json', array_replace($this->formNomes(), ['hora' => '15:00:00']));
-        $this->assertResponseCode(201);
-        foreach ([[], ['servidor_nome' => 'Servidor técnico'], ['data' => '2026-02-30'], ['hora' => '25:00:00'], ['sql' => '1=1'], ['servidor_nome' => []]] as $selector) {
-            $this->deleteJson('/api/agendamentos/deletar.json', ['seletor' => $selector]);
-            $this->assertResponseCode(422);
+        $before = $this->getTableLocator()->get('Agendamentos')->get($id)->toArray();
+        foreach (['usuarios', 'setores', 'responsaveis', 'horarios', 'agendamentos'] as $resource) {
+            $this->get('/api/' . $resource . '/buscar.json?nome=Maria');
+            $this->assertResponseCode(404);
+            $this->patch('/api/' . $resource . '/editar.json', [
+                'seletor' => ['id' => $id], 'assunto' => 'Não deve alterar',
+            ]);
+            $this->assertResponseCode(404);
+            $this->deleteJson('/api/' . $resource . '/deletar.json', ['seletor' => ['id' => $id]]);
+            $this->assertResponseCode(404);
+            $this->post('/api/' . $resource . '/reativar.json', ['seletor' => ['id' => $id]]);
+            $this->assertResponseCode(404);
         }
-        $this->assertNull($this->getTableLocator()->get('Agendamentos')->get($id)->deleted);
-        $this->get('/api/agendamentos/buscar.json?servidor_nome=Inexistente');
+        $this->patch('/api/agendamentos/cancelar.json', ['seletor' => ['id' => $id]]);
         $this->assertResponseCode(404);
-        $this->get('/api/agendamentos/deletar.json?' . http_build_query($this->seletorAgendamento()));
-        $this->assertResponseCode(405);
+        // A rota automática em inglês também não pode recuperar o alvo pelo corpo.
+        $this->patch('/api/agendamentos/edit.json', ['seletor' => ['id' => $id], 'assunto' => 'Não alterar']);
+        $this->assertResponseCode(422);
+        $this->assertEquals($before, $this->getTableLocator()->get('Agendamentos')->get($id)->toArray());
     }
 
     public function testSectorCrudByNameAndDuplicateProtection(): void
@@ -229,7 +235,7 @@ class ReferenciasPorNomeControllerTest extends TestCase
         $this->assertCount(3, $this->responseData());
     }
 
-    public function testScheduleCrudBySectorNameAndSelector(): void
+    public function testScheduleCrudBySectorNameAndRouteId(): void
     {
         $this->post('/api/horarios/adicionar.json', [
             'setor_nome' => 'Secretaria', 'dia_semana' => 1, 'hora_inicio' => '08:00:00', 'hora_fim' => '12:00:00',
@@ -237,22 +243,19 @@ class ReferenciasPorNomeControllerTest extends TestCase
         $this->assertResponseCode(201);
         $id = $this->responseData()['id'];
         $this->get('/api/horarios/buscar/setor/nome/Secretaria.json');
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->assertResponseOk();
         $this->assertCount(2, $this->responseData());
         $this->get('/api/horarios/listar.json?setor_nome=Secretaria&dia_semana=1');
         $this->assertCount(1, $this->responseData());
-        $selector = ['setor_nome' => 'Secretaria', 'dia_semana' => 1, 'hora_inicio' => '08:00:00'];
-        $this->patch('/api/horarios/editar.json', ['seletor' => $selector, 'hora_fim' => '11:00:00']);
-        $this->assertResponseOk((string)$this->_response->getBody());
-        $this->deleteJson('/api/horarios/deletar.json', ['seletor' => $selector]);
-        $this->assertResponseOk((string)$this->_response->getBody());
-        $this->post('/api/horarios/reativar.json', ['seletor' => $selector]);
-        $this->assertResponseOk((string)$this->_response->getBody());
-        $this->get('/api/horarios/buscar.json?' . http_build_query($selector));
-        $this->assertResponseOk((string)$this->_response->getBody());
+        $this->patch('/api/horarios/editar/' . $id . '.json', ['hora_fim' => '11:00:00']);
+        $this->assertResponseOk();
+        $this->delete('/api/horarios/deletar/' . $id . '.json');
+        $this->assertResponseOk();
+        $this->post('/api/horarios/reativar/' . $id . '.json');
+        $this->assertResponseOk();
+        $this->get('/api/horarios/buscar/' . $id . '.json');
+        $this->assertResponseOk();
         $this->assertSame($id, $this->responseData()['id']);
-        $this->deleteJson('/api/horarios/deletar.json', ['seletor' => ['setor_nome' => 'Secretaria']]);
-        $this->assertResponseCode(422);
     }
 
     public function testResponsibleLinksCanBeCreatedChangedAndActivatedUsingNames(): void
@@ -266,22 +269,18 @@ class ReferenciasPorNomeControllerTest extends TestCase
         $this->assertResponseCode(201);
         $id = $this->responseData()['id'];
         $this->assertSame($carla->id, $this->responseData()['alunos_id']);
-        $selector = ['responsavel_nome' => 'Maria Responsável', 'aluno_nome' => 'Carla'];
-        $this->patch('/api/responsaveis/editar.json', ['seletor' => $selector, 'aluno_nome' => 'Davi']);
+        $this->patch('/api/responsaveis/editar/' . $id . '.json', ['aluno_nome' => 'Davi']);
         $this->assertResponseOk((string)$this->_response->getBody());
         $this->assertSame($davi->id, $this->responseData()['alunos_id']);
-        $selector['aluno_nome'] = 'Davi';
-        $this->deleteJson('/api/responsaveis/deletar.json', ['seletor' => $selector]);
+        $this->delete('/api/responsaveis/deletar/' . $id . '.json');
         $this->assertResponseOk((string)$this->_response->getBody());
-        $this->post('/api/responsaveis/reativar.json', ['seletor' => $selector]);
+        $this->post('/api/responsaveis/reativar/' . $id . '.json');
         $this->assertResponseOk((string)$this->_response->getBody());
-        $this->get('/api/responsaveis/buscar.json?' . http_build_query($selector));
+        $this->get('/api/responsaveis/buscar/' . $id . '.json');
         $this->assertResponseOk((string)$this->_response->getBody());
         $this->assertSame($id, $this->responseData()['id']);
         $this->get('/api/responsaveis/listar.json?aluno_nome=Davi');
         $this->assertCount(1, $this->responseData());
-        $this->deleteJson('/api/responsaveis/deletar.json', ['seletor' => ['responsavel_nome' => 'Maria Responsável']]);
-        $this->assertResponseCode(422);
     }
 
     private function deleteJson(string $url, array $data): void
@@ -298,7 +297,7 @@ class ReferenciasPorNomeControllerTest extends TestCase
         ];
     }
 
-    private function seletorAgendamento(): array
+    private function filtrosAgendamento(): array
     {
         return [
             'servidor_nome' => 'Servidor técnico', 'responsavel_nome' => 'Maria Responsável',

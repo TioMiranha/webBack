@@ -1,0 +1,239 @@
+SETOR — ADICIONAR
+POST http://localhost:8765/api/setores/adicionar.json
+Body: Form URL Encoded
+nome: Atendimento Acadêmico
+
+SETOR — EDITAR
+PATCH http://localhost:8765/api/setores/editar/<ID_DO_SETOR_CADASTRADO>.json
+Body: Form URL Encoded
+nome: Atendimento Acadêmico e Pedagógico
+
+CURSO — ADICIONAR
+POST http://localhost:8765/api/cursos/adicionar.json
+Body: Form URL Encoded
+nome: Técnico em Informática para Internet
+
+CURSO — EDITAR
+PATCH http://localhost:8765/api/cursos/editar/<ID_DO_CURSO_CADASTRADO>.json
+Body: Form URL Encoded
+nome: Técnico em Informática para Internet — Integrado
+
+PERFIL — ADICIONAR
+POST http://localhost:8765/api/perfis/adicionar.json
+Body: Form URL Encoded
+nome: Responsável pela apresentação
+
+PERFIL — EDITAR
+PATCH http://localhost:8765/api/perfis/editar/<ID_DO_PERFIL_CADASTRADO>.json
+Body: Form URL Encoded
+nome: Responsável familiar
+
+USUÁRIO SERVIDOR / COORDENADOR — ADICIONAR
+POST http://localhost:8765/api/usuarios/adicionar.json
+Body: Form URL Encoded
+nome: Rafael Mendes
+cpf: 11122233344
+email: rafael.apresentacao@example.com
+password: Apresentacao2026!
+telefone: 66999990001
+tipo_id: 1
+setor_id: <ID_DO_SETOR_CADASTRADO>
+agendar: 1
+
+USUÁRIO SERVIDOR — EDITAR
+PATCH http://localhost:8765/api/usuarios/editar/<ID_DO_USUARIO_SERVIDOR>.json
+Body: Form URL Encoded
+telefone: 66999990002
+
+USUÁRIO RESPONSÁVEL — ADICIONAR
+POST http://localhost:8765/api/usuarios/adicionar.json
+Body: Form URL Encoded
+nome: Camila Ferreira
+cpf: 55566677788
+email: camila.apresentacao@example.com
+password: Apresentacao2026!
+telefone: 66999990003
+tipo_id: <ID_DO_PERFIL_CADASTRADO>
+agendar: 0
+
+USUÁRIO RESPONSÁVEL — EDITAR
+PATCH http://localhost:8765/api/usuarios/editar/<ID_DO_USUARIO_RESPONSAVEL>.json
+Body: Form URL Encoded
+telefone: 66999990004
+
+LOGIN DO COORDENADOR
+POST http://localhost:8765/api/usuarios/entrar.json
+Body: Form URL Encoded
+email: rafael.apresentacao@example.com
+password: Apresentacao2026!
+
+ALUNO 1 — ADICIONAR
+POST http://localhost:8765/api/alunos/adicionar.json
+Body: Form URL Encoded
+nome: Gabriel Ferreira
+matricula: 202611260101
+curso: Técnico em Informática para Internet
+curso_id: <ID_DO_CURSO_CADASTRADO>
+situacao: Matriculado
+emaila: gabriel.academico@example.com
+emailp: gabriel.pessoal@example.com
+anop: 2026/2
+
+ALUNO 1 — EDITAR
+PATCH http://localhost:8765/api/alunos/editar/<ID_DO_ALUNO_1>.json
+Body: Form URL Encoded
+emailp: gabriel.contato@example.com
+
+ALUNO 2 — ADICIONAR
+POST http://localhost:8765/api/alunos/adicionar.json
+Body: Form URL Encoded
+nome: Luiza Ferreira
+matricula: 202611260102
+curso: Técnico em Informática para Internet
+curso_id: <ID_DO_CURSO_CADASTRADO>
+situacao: Matriculado
+emaila: luiza.academico@example.com
+emailp: luiza.pessoal@example.com
+anop: 2026/2
+
+ALUNO 2 — EDITAR
+PATCH http://localhost:8765/api/alunos/editar/<ID_DO_ALUNO_2>.json
+Body: Form URL Encoded
+emailp: luiza.contato@example.com
+
+VÍNCULO RESPONSÁVEL / ALUNO 1 — ADICIONAR
+POST http://localhost:8765/api/responsaveis/adicionar.json
+Body: Form URL Encoded
+users_id: <ID_DO_USUARIO_RESPONSAVEL>
+alunos_id: <ID_DO_ALUNO_1>
+
+VÍNCULO RESPONSÁVEL / ALUNO 1 — EDITAR
+PATCH http://localhost:8765/api/responsaveis/editar/<ID_DO_VINCULO_RESPONSAVEL_ALUNO_1>.json
+Body: Form URL Encoded
+users_id: <ID_DO_USUARIO_RESPONSAVEL>
+alunos_id: <ID_DO_ALUNO_1>
+
+VÍNCULO RESPONSÁVEL / ALUNO 2 — ADICIONAR
+POST http://localhost:8765/api/responsaveis/adicionar.json
+Body: Form URL Encoded
+users_id: <ID_DO_USUARIO_RESPONSAVEL>
+alunos_id: <ID_DO_ALUNO_2>
+
+COORDENADOR — ADICIONAR
+POST http://localhost:8765/api/coordenadores/adicionar.json
+Body: Form URL Encoded
+users_id: <ID_DO_USUARIO_SERVIDOR>
+curso_id: <ID_DO_CURSO_CADASTRADO>
+
+COORDENADOR — EDITAR
+PATCH http://localhost:8765/api/coordenadores/editar/<ID_DO_COORDENADOR_CADASTRADO>.json
+Body: Form URL Encoded
+users_id: <ID_DO_USUARIO_SERVIDOR>
+curso_id: <ID_DO_CURSO_CADASTRADO>
+
+HORÁRIO — ADICIONAR
+POST http://localhost:8765/api/horarios/adicionar.json
+Body: Form URL Encoded
+setor_id: <ID_DO_SETOR_CADASTRADO>
+dia_semana: 6
+hora_inicio: 18:00
+hora_fim: 22:00
+
+HORÁRIO — EDITAR
+PATCH http://localhost:8765/api/horarios/editar/<ID_DO_HORARIO_CADASTRADO>.json
+Body: Form URL Encoded
+hora_fim: 21:30
+
+DISPONIBILIDADE DO COORDENADOR — ADICIONAR
+POST http://localhost:8765/api/disponibilidades/adicionar.json
+Body: Form URL Encoded
+dataInicio: 2026-11-28 18:00
+dataFim: 2026-11-28 21:30
+
+DISPONIBILIDADE DO COORDENADOR — EDITAR
+PATCH http://localhost:8765/api/disponibilidades/editar/<ID_DA_DISPONIBILIDADE_CADASTRADA>.json
+Body: Form URL Encoded
+dataFim: 2026-11-28 21:00
+
+AGENDAMENTO 1 — ADICIONAR
+POST http://localhost:8765/api/agendamentos/adicionar.json
+Body: Form URL Encoded
+servidor_id: <ID_DO_USUARIO_SERVIDOR>
+responsavel_id: <ID_DO_USUARIO_RESPONSAVEL>
+horario_id: <ID_DO_HORARIO_CADASTRADO>
+data: 2026-11-28
+hora: 19:00
+assunto: Acompanhamento escolar de Gabriel e Luiza
+
+AGENDAMENTO 2 — ADICIONAR
+POST http://localhost:8765/api/agendamentos/adicionar.json
+Body: Form URL Encoded
+servidor_id: <ID_DO_USUARIO_SERVIDOR>
+responsavel_id: <ID_DO_USUARIO_RESPONSAVEL>
+horario_id: <ID_DO_HORARIO_CADASTRADO>
+data: 2026-11-28
+hora: 19:30
+assunto: Orientações sobre atividades e frequência
+
+AGENDAMENTO 1 — EDITAR
+PATCH http://localhost:8765/api/agendamentos/editar/<ID_DO_AGENDAMENTO_1>.json
+Body: Form URL Encoded
+hora: 20:00
+assunto: Acompanhamento escolar e plano de estudos
+
+AGENDAMENTO — CONFLITO COM O AGENDAMENTO 1 EDITADO
+POST http://localhost:8765/api/agendamentos/adicionar.json
+Body: Form URL Encoded
+servidor_id: <ID_DO_USUARIO_SERVIDOR>
+responsavel_id: <ID_DO_USUARIO_RESPONSAVEL>
+horario_id: <ID_DO_HORARIO_CADASTRADO>
+data: 2026-11-28
+hora: 20:00
+assunto: Teste de reserva no mesmo horário
+
+AGENDAMENTO — HORA FORA DO ATENDIMENTO
+POST http://localhost:8765/api/agendamentos/adicionar.json
+Body: Form URL Encoded
+servidor_id: <ID_DO_USUARIO_SERVIDOR>
+responsavel_id: <ID_DO_USUARIO_RESPONSAVEL>
+horario_id: <ID_DO_HORARIO_CADASTRADO>
+data: 2026-11-28
+hora: 23:00
+assunto: Teste de horário indisponível
+
+AGENDAMENTO — DIA FORA DO ATENDIMENTO
+POST http://localhost:8765/api/agendamentos/adicionar.json
+Body: Form URL Encoded
+servidor_id: <ID_DO_USUARIO_SERVIDOR>
+responsavel_id: <ID_DO_USUARIO_RESPONSAVEL>
+horario_id: <ID_DO_HORARIO_CADASTRADO>
+data: 2026-11-29
+hora: 19:00
+assunto: Teste de dia sem atendimento
+
+HORÁRIOS — BUSCAR POR DIA
+GET http://localhost:8765/api/horarios/buscar/dia/6.json
+
+HORÁRIOS — BUSCAR POR SETOR
+GET http://localhost:8765/api/horarios/buscar/setor/<ID_DO_SETOR_CADASTRADO>.json
+
+AGENDAMENTOS — BUSCAR POR DATA
+GET http://localhost:8765/api/agendamentos/buscar/data/2026-11-28.json
+
+AGENDAMENTOS — BUSCAR POR SERVIDOR
+GET http://localhost:8765/api/agendamentos/buscar/servidor/<ID_DO_USUARIO_SERVIDOR>.json
+
+AGENDAMENTOS — BUSCAR POR RESPONSÁVEL
+GET http://localhost:8765/api/agendamentos/buscar/responsavel/<ID_DO_USUARIO_RESPONSAVEL>.json
+
+AGENDAMENTOS — BUSCAR POR ALUNO
+GET http://localhost:8765/api/agendamentos/buscar/aluno/<ID_DO_ALUNO_1>.json
+
+ALUNOS — BUSCAR POR MATRÍCULA
+GET http://localhost:8765/api/alunos/findmat/202611260101.json
+
+RESPONSÁVEIS — FILTRAR POR USUÁRIO
+GET http://localhost:8765/api/responsaveis/listar.json?users_id=<ID_DO_USUARIO_RESPONSAVEL>
+
+RESPONSÁVEIS — FILTRAR POR ALUNO
+GET http://localhost:8765/api/responsaveis/listar.json?alunos_id=<ID_DO_ALUNO_1>
