@@ -494,7 +494,6 @@ class AgendamentosController extends AppController
                 'hora_inicio' => $form['hora'],
                 'hora_fim' => $form['hora'],
             ];
-            // Preserva o horário atual se ele ainda atende à nova data e hora.
             if (!array_key_exists('horario_id', $form) && $registro->horario_id !== null) {
                 $paramsAtuais = $params;
                 $paramsAtuais['id'] = $registro->horario_id;
